@@ -9,7 +9,14 @@ export default defineConfig({
     description:
       "Smartly detects form fields on any page and autofills your custom values with a single click.",
     version: "1.0.0",
-    permissions: ["storage", "activeTab", "scripting", "contextMenus", "tabs"],
+    permissions: [
+      "storage",
+      "activeTab",
+      "scripting",
+      "contextMenus",
+      "tabs",
+      "clipboardWrite",
+    ],
     host_permissions: ["<all_urls>"],
     action: {
       default_title: "Form Secretary",

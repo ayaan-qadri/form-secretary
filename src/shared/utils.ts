@@ -64,28 +64,45 @@ export function showToast(
 
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) return false;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+
+  // Strategy 1: navigator.clipboard.writeText
+  if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+    try {
       await navigator.clipboard.writeText(text);
       return true;
+    } catch (e) {
+      // Document might not be focused or permission denied, try execCommand fallback
     }
-  } catch (e) {
-    // Fallback
   }
 
+  // Strategy 2: document.execCommand('copy') via temporary textarea
   try {
     const textarea = document.createElement("textarea");
     textarea.value = text;
     textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
+    textarea.style.top = "0";
+    textarea.style.left = "0";
+    textarea.style.width = "2em";
+    textarea.style.height = "2em";
+    textarea.style.padding = "0";
+    textarea.style.border = "none";
+    textarea.style.outline = "none";
+    textarea.style.boxShadow = "none";
+    textarea.style.background = "transparent";
+    textarea.style.opacity = "0.01";
+    textarea.setAttribute("readonly", "");
     document.body.appendChild(textarea);
-    textarea.select();
+    if (textarea.focus) textarea.focus();
+    if (textarea.select) textarea.select();
+    if (textarea.setSelectionRange) textarea.setSelectionRange(0, text.length);
     document.execCommand("copy");
     document.body.removeChild(textarea);
     return true;
   } catch (e) {
-    return false;
+    // Fallback failed
   }
+
+  return false;
 }
 
 export function exportJsonFile(filename: string, data: any): void {

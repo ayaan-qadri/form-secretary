@@ -199,18 +199,27 @@ export function findLabelForElement(element: HTMLElement | null): string {
           (element.closest &&
             element.closest("[data-field-path]")?.getAttribute("data-field-path"))
         : "";
+      const dataName =
+        (element.getAttribute ? element.getAttribute("data-name") : "") ||
+        (element.closest &&
+          element.closest("[data-name]")?.getAttribute("data-name")) ||
+        "";
 
-      // 2. Matching <label for="id">, <label for="name">, or <label for="data-field-path">
+      // 2. Matching <label for="id">, <label for="name">, <label data-for="..."> or <label for="data-field-path">
       try {
         const allLabels = document.getElementsByTagName("label");
         for (let i = 0; i < allLabels.length; i++) {
           const l = allLabels[i];
+          if (!l) continue;
+          const forVal = l.getAttribute ? l.getAttribute("for") : (l as any).htmlFor;
+          const dataForVal = l.getAttribute ? l.getAttribute("data-for") : null;
           if (
-            l &&
-            ((idVal &&
-              (l.htmlFor === idVal || l.getAttribute("for") === idVal)) ||
-              (nameVal && l.getAttribute("for") === nameVal) ||
-              (fieldPath && l.getAttribute("for") === fieldPath))
+            (idVal &&
+              (l.htmlFor === idVal || forVal === idVal)) ||
+            (nameVal && forVal === nameVal) ||
+            (fieldPath && forVal === fieldPath) ||
+            (dataName && (forVal === dataName || dataForVal === dataName)) ||
+            (nameVal && dataForVal && nameVal.startsWith(dataForVal))
           ) {
             const t = cleanExtractedLabelText(
               l.innerText || l.textContent || "",
@@ -219,7 +228,6 @@ export function findLabelForElement(element: HTMLElement | null): string {
           }
         }
       } catch (e) {}
-
 
       // Fallback query with CSS.escape
       try {
@@ -274,7 +282,35 @@ export function findLabelForElement(element: HTMLElement | null): string {
       }
     } catch (e) {}
 
-    // 5. Direct preceding sibling element
+    // 5. Table <th> row header association (common in table forms like Mozilla Add-ons Hub)
+    try {
+      if (element.closest) {
+        const tr = element.closest("tr");
+        if (tr) {
+          const th = tr.querySelector("th");
+          if (th && !th.contains(element)) {
+            const innerLabel = th.querySelector(
+              "label, .label, [class*='label'], [class*='title']",
+            ) as HTMLElement;
+            const targetNode = innerLabel || th;
+            let raw = "";
+            if (targetNode.cloneNode) {
+              const clone = targetNode.cloneNode(true) as HTMLElement;
+              clone
+                .querySelectorAll(".tip, .tooltip, button, svg, input")
+                .forEach((el) => el.remove());
+              raw = clone.innerText || clone.textContent || "";
+            } else {
+              raw = targetNode.innerText || targetNode.textContent || "";
+            }
+            const t = cleanExtractedLabelText(raw);
+            if (t && t.length < 120) return t;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // 6. Direct preceding sibling element
     try {
       let prev: Element | null = element.previousElementSibling;
       while (prev) {
@@ -289,12 +325,13 @@ export function findLabelForElement(element: HTMLElement | null): string {
               prevTag === "LABEL" ||
               prevTag === "LEGEND" ||
               prevTag === "DT" ||
+              prevTag === "TH" ||
               (prev.className &&
                 typeof prev.className === "string" &&
                 /\b(label|question|title|heading|name)\b/i.test(prev.className));
             if (
               isLabelLike ||
-              ["SPAN", "P", "DIV", "H2", "H3", "H4", "H5", "H6"].includes(
+              ["SPAN", "P", "DIV", "H2", "H3", "H4", "H5", "H6", "TH"].includes(
                 prevTag,
               )
             ) {
@@ -309,7 +346,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
       }
     } catch (e) {}
 
-    // 6. Field container search (max depth 3, scoped strictly to dedicated single-field wrappers)
+    // 7. Field container search (max depth 3, scoped strictly to dedicated single-field wrappers)
     const STOP_CONTAINER_TAGS = [
       "BODY",
       "HTML",
@@ -355,7 +392,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
 
         // Search dedicated single-field wrapper
         const containerLabel = currentParent.querySelector(
-          "label, legend, .label, .field-label, .form-label, [class*='label'], [class*='question'], [class*='field-title'], [data-testid*='label'], dt, span.label",
+          "label, legend, .label, .field-label, .form-label, [class*='label'], [class*='question'], [class*='field-title'], [data-testid*='label'], dt, span.label, th",
         ) as HTMLElement;
 
         if (
@@ -384,6 +421,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
                 prevSiblingTag === "LABEL" ||
                 prevSiblingTag === "LEGEND" ||
                 prevSiblingTag === "DT" ||
+                prevSiblingTag === "TH" ||
                 (prevSibling.className &&
                   typeof prevSibling.className === "string" &&
                   /\b(label|question|field-title)\b/i.test(
@@ -391,7 +429,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
                   ));
               if (
                 isLabelLike ||
-                ["SPAN", "P", "DIV", "H3", "H4", "H5", "H6"].includes(
+                ["SPAN", "P", "DIV", "H3", "H4", "H5", "H6", "TH"].includes(
                   prevSiblingTag,
                 )
               ) {

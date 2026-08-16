@@ -75,7 +75,112 @@
   }
 
   .fs-spinning {
-    animation: spin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* Scanner Pulse & Radar Animation */
+  .fs-scan-radar-wrapper {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fs-scan-pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+    animation: scanPulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    opacity: 0;
+  }
+
+  .fs-scan-pulse-ring:nth-child(2) {
+    animation-delay: 0.6s;
+  }
+
+  .fs-scan-pulse-ring:nth-child(3) {
+    animation-delay: 1.2s;
+  }
+
+  .fs-scan-icon-core {
+    position: relative;
+    z-index: 2;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    animation: corePulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes scanPulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+
+  @keyframes corePulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.06);
+    }
+  }
+
+  /* Skeleton Loading Card Shimmer */
+  .fs-skeleton-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .fs-skeleton-card::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(241, 245, 249, 0.6) 20%,
+      rgba(226, 232, 240, 0.9) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer 1.5s infinite;
+    content: '';
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .fs-skeleton-line {
+    background: #f1f5f9;
+    border-radius: 0.375rem;
   }
 
   /* Compact Notification Toast */
@@ -87,6 +192,16 @@
     text-align: center;
     pointer-events: none;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+
+  .select-text {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+
+  .select-all {
+    user-select: all !important;
+    -webkit-user-select: all !important;
   }
 
   @keyframes spin {

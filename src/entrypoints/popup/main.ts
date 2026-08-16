@@ -215,6 +215,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderFields();
   }
 
+  function switchToTab(tabName: string): void {
+    if (btnHeaderSettings) btnHeaderSettings.classList.remove("active");
+    tabButtons.forEach((b) => b.classList.remove("active"));
+    tabContents.forEach((c) => c.classList.remove("active"));
+
+    if (tabName === "settings") {
+      if (btnHeaderSettings) btnHeaderSettings.classList.add("active");
+      document.getElementById("tab-settings")?.classList.add("active");
+    } else {
+      const btn = document.querySelector(`.fs-tab-btn[data-tab="${tabName}"]`);
+      if (btn) btn.classList.add("active");
+      const targetContent = document.getElementById(`tab-${tabName}`);
+      if (targetContent) targetContent.classList.add("active");
+    }
+  }
+
   function setupEventListeners(): void {
     // Header Settings Icon Button
     if (btnHeaderSettings) {
@@ -222,18 +238,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const settingsTab = document.getElementById("tab-settings");
         const isSettingsActive = settingsTab?.classList.contains("active");
         if (isSettingsActive) {
-          btnHeaderSettings.classList.remove("active");
-          tabContents.forEach((c) => c.classList.remove("active"));
-          document.getElementById("tab-rules")?.classList.add("active");
-          const rulesTabBtn = document.querySelector(
-            '.fs-tab-btn[data-tab="rules"]',
-          );
-          if (rulesTabBtn) rulesTabBtn.classList.add("active");
+          switchToTab("rules");
         } else {
-          tabButtons.forEach((b) => b.classList.remove("active"));
-          tabContents.forEach((c) => c.classList.remove("active"));
-          btnHeaderSettings.classList.add("active");
-          settingsTab?.classList.add("active");
+          switchToTab("settings");
         }
       });
     }
@@ -241,14 +248,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Navigation Tabs
     tabButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (btnHeaderSettings) btnHeaderSettings.classList.remove("active");
-        tabButtons.forEach((b) => b.classList.remove("active"));
-        tabContents.forEach((c) => c.classList.remove("active"));
-
-        btn.classList.add("active");
         const tabName = (btn as HTMLElement).dataset.tab;
-        const targetContent = document.getElementById(`tab-${tabName}`);
-        if (targetContent) targetContent.classList.add("active");
+        if (tabName) switchToTab(tabName);
       });
     });
 
@@ -335,13 +336,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Scanner actions
     if (btnRefreshScanner) {
       btnRefreshScanner.addEventListener("click", () => {
-        const icon = btnRefreshScanner.querySelector(".lucide-refresh, .fs-icon-refresh, svg");
-        if (icon) {
-          icon.classList.remove("fs-spinning");
-          void (icon as HTMLElement).offsetWidth;
-          icon.classList.add("fs-spinning");
-          setTimeout(() => icon.classList.remove("fs-spinning"), 600);
-        }
         scanActiveTab();
       });
     }
@@ -841,9 +835,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Row 2: Value Preview
       const valPreview = document.createElement("div");
       valPreview.className =
-        "fs-rule-value-preview font-mono text-xs text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200/60 truncate cursor-pointer hover:bg-blue-50/60 hover:border-blue-200 transition-all";
+        "fs-rule-value-preview font-mono text-xs text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200/60 truncate cursor-text select-all hover:bg-blue-50/60 hover:border-blue-300 transition-all";
       valPreview.dataset.id = field.id;
-      valPreview.title = `Click to copy: ${field.value}`;
+      valPreview.title = `Click to select & copy: ${field.value}`;
       valPreview.textContent = field.value;
 
       // Row 3: Keywords & Action Buttons
@@ -912,6 +906,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       card.appendChild(bottomRow);
 
       const handleCopy = async () => {
+        await copyToClipboard(field.value);
         valPreview.classList.remove("fs-copied-flash");
         void (valPreview as HTMLElement).offsetWidth;
         valPreview.classList.add("fs-copied-flash");
@@ -919,7 +914,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           () => valPreview.classList.remove("fs-copied-flash"),
           400,
         );
-        await utilsShowToast(popupToast, "Value copied to clipboard");
+        showToast("Value copied to clipboard");
       };
 
       valPreview.addEventListener("click", handleCopy);
@@ -1013,13 +1008,90 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function scanActiveTab(): Promise<void> {
     if (!pageFieldsContainer) return;
+
+    if (btnRefreshScanner) {
+      const refreshIcon = btnRefreshScanner.querySelector(
+        ".lucide-refresh, .fs-icon-refresh, svg",
+      );
+      if (refreshIcon) {
+        refreshIcon.classList.remove("fs-spinning");
+        void (refreshIcon as HTMLElement).offsetWidth;
+        refreshIcon.classList.add("fs-spinning");
+      }
+    }
+
     const loadingDiv = document.createElement("div");
     loadingDiv.className =
-      "fs-empty-state flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2 bg-white rounded-xl border border-dashed border-slate-200 shadow-2xs";
-    const p = document.createElement("p");
-    p.className = "text-xs font-medium";
-    p.textContent = "Scanning page form controls...";
-    loadingDiv.appendChild(p);
+      "fs-empty-state flex flex-col items-center justify-center p-6 text-center gap-4 bg-white rounded-xl border border-slate-200 shadow-2xs w-full";
+
+    // Animated Radar Pulse Core
+    const radarWrapper = document.createElement("div");
+    radarWrapper.className = "fs-scan-radar-wrapper my-2";
+
+    const ring1 = document.createElement("div");
+    ring1.className = "fs-scan-pulse-ring";
+    const ring2 = document.createElement("div");
+    ring2.className = "fs-scan-pulse-ring";
+    const ring3 = document.createElement("div");
+    ring3.className = "fs-scan-pulse-ring";
+
+    const iconCore = document.createElement("div");
+    iconCore.className = "fs-scan-icon-core";
+    const scanIcon = createIconElement("scanner", {
+      size: 20,
+      class: "text-blue-600",
+    });
+    if (scanIcon) iconCore.appendChild(scanIcon);
+
+    radarWrapper.appendChild(ring1);
+    radarWrapper.appendChild(ring2);
+    radarWrapper.appendChild(ring3);
+    radarWrapper.appendChild(iconCore);
+    loadingDiv.appendChild(radarWrapper);
+
+    // Dynamic scanning text
+    const textGroup = document.createElement("div");
+    textGroup.className = "flex flex-col gap-1 items-center";
+
+    const titleP = document.createElement("p");
+    titleP.className = "text-xs font-semibold text-slate-800 tracking-tight";
+    titleP.textContent = "Scanning page form controls...";
+    textGroup.appendChild(titleP);
+
+    const subP = document.createElement("p");
+    subP.className = "text-[11px] text-slate-400 font-medium";
+    subP.textContent = "Detecting inputs, textareas, and buttons";
+    textGroup.appendChild(subP);
+
+    loadingDiv.appendChild(textGroup);
+
+    // Shimmer Skeleton Placeholder Cards
+    const skeletonContainer = document.createElement("div");
+    skeletonContainer.className =
+      "w-full flex flex-col gap-2 pt-2 border-t border-slate-100";
+
+    for (let i = 0; i < 2; i++) {
+      const skCard = document.createElement("div");
+      skCard.className = "fs-skeleton-card";
+
+      const row1 = document.createElement("div");
+      row1.className = "flex items-center justify-between";
+      const line1 = document.createElement("div");
+      line1.className = "fs-skeleton-line h-3.5 w-24";
+      const line2 = document.createElement("div");
+      line2.className = "fs-skeleton-line h-3.5 w-12";
+      row1.appendChild(line1);
+      row1.appendChild(line2);
+
+      const line3 = document.createElement("div");
+      line3.className = "fs-skeleton-line h-6 w-full";
+
+      skCard.appendChild(row1);
+      skCard.appendChild(line3);
+      skeletonContainer.appendChild(skCard);
+    }
+    loadingDiv.appendChild(skeletonContainer);
+
     pageFieldsContainer.replaceChildren(loadingDiv);
 
     if (!allFields || allFields.length === 0) {
@@ -1028,7 +1100,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       } catch (e) {}
     }
 
-    notifyActiveTab({ action: "GET_PAGE_FIELDS" }, async (response, tab) => {
+    let scanDone = false;
+    const processScanResults = async (response: any, tab: any) => {
+      if (btnRefreshScanner) {
+        const refreshIcon = btnRefreshScanner.querySelector(
+          ".lucide-refresh, .fs-icon-refresh, svg",
+        );
+        if (refreshIcon) refreshIcon.classList.remove("fs-spinning");
+      }
       let fields: DetectedPageField[] =
         response && Array.isArray(response.fields) && response.fields.length > 0
           ? response.fields
@@ -1050,6 +1129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const clean = (s: string) =>
                   (s || "")
                     .replace(/\s*\*+\s*$/g, "")
+                    .replace(/\s*\?+\s*$/g, "")
                     .replace(/:\s*$/g, "")
                     .replace(/\((required|optional)\)/gi, "")
                     .trim();
@@ -1244,17 +1324,42 @@ document.addEventListener("DOMContentLoaded", async () => {
                   }
                   if (!label && (id || name)) {
                     try {
+                      const dataName =
+                        el.getAttribute?.("data-name") ||
+                        el.closest?.("[data-name]")?.getAttribute("data-name") ||
+                        "";
                       const allLabels = document.getElementsByTagName("label");
                       for (let j = 0; j < allLabels.length; j++) {
                         const l = allLabels[j];
                         if (!l) continue;
                         const forAttr = l.getAttribute("for");
+                        const dataForAttr = l.getAttribute("data-for");
                         if (
                           (id && (l.htmlFor === id || forAttr === id)) ||
-                          (name && forAttr === name)
+                          (name && forAttr === name) ||
+                          (dataName && (forAttr === dataName || dataForAttr === dataName)) ||
+                          (name && dataForAttr && name.startsWith(dataForAttr))
                         ) {
                           label = l.innerText || l.textContent || "";
                           break;
+                        }
+                      }
+                    } catch (e) {}
+                  }
+
+                  if (!label && el.closest) {
+                    try {
+                      const tr = el.closest("tr");
+                      if (tr) {
+                        const th = tr.querySelector("th");
+                        if (th && !th.contains(el)) {
+                          const innerLabel = th.querySelector(
+                            "label, .label, [class*='label'], [class*='title']",
+                          ) as HTMLElement;
+                          label =
+                            (innerLabel || th).innerText ||
+                            (innerLabel || th).textContent ||
+                            "";
                         }
                       }
                     } catch (e) {}
@@ -1439,7 +1544,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (fields.length === 0 && (!response || !response.fields)) {
         const urlStr = (tab?.url || tab?.pendingUrl || "").toLowerCase();
+        const isAmoUrl = urlStr.includes("addons.mozilla.org");
         const isRestrictedUrl =
+          isAmoUrl ||
           urlStr.startsWith("chrome://") ||
           urlStr.startsWith("edge://") ||
           urlStr.startsWith("about:") ||
@@ -1450,232 +1557,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const isFileUrl = urlStr.startsWith("file:///");
 
-        if (isRestrictedUrl) {
-          const emptyDiv = document.createElement("div");
-          emptyDiv.className =
-            "fs-empty-state flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2 bg-white rounded-xl border border-dashed border-slate-200 shadow-2xs";
-
-          const infoIcon = createIconElement("help", {
-            size: 32,
-            class: "text-blue-500 stroke-2",
-          });
-          if (infoIcon) emptyDiv.appendChild(infoIcon);
-
-          const p = document.createElement("p");
-          p.className = "text-xs font-medium text-slate-700";
-
-          const strong = document.createElement("strong");
-          strong.textContent = "Browser System Page";
-          p.appendChild(strong);
-          p.appendChild(document.createElement("br"));
-
-          const small = document.createElement("small");
-          small.className = "text-slate-400";
-          small.textContent =
-            "Browser system and Web Store pages are protected by browser security policies. Please open any web page with forms.";
-          p.appendChild(small);
-
-          emptyDiv.appendChild(p);
-          pageFieldsContainer.replaceChildren(emptyDiv);
+        if (isAmoUrl) {
+          renderRestrictedPageState(pageFieldsContainer, tab, "amo");
+        } else if (isRestrictedUrl) {
+          renderRestrictedPageState(pageFieldsContainer, tab, "restricted");
         } else if (isFileUrl) {
-          const emptyDiv = document.createElement("div");
-          emptyDiv.className =
-            "fs-empty-state flex flex-col items-center justify-center p-5 text-center text-slate-400 gap-2.5 bg-white rounded-xl border border-dashed border-slate-200 shadow-2xs";
-
-          const warnIcon = createIconElement("warning", {
-            size: 32,
-            class: "text-amber-500 stroke-2",
-          });
-          if (warnIcon) emptyDiv.appendChild(warnIcon);
-
-          const titleP = document.createElement("p");
-          titleP.className = "text-xs font-semibold text-slate-800";
-          titleP.textContent = "Local File Access Required";
-          emptyDiv.appendChild(titleP);
-
-          const descP = document.createElement("p");
-          descP.className = "text-[11.5px] text-slate-500 leading-normal";
-          descP.appendChild(document.createTextNode("To autofill local "));
-          const codeEl = document.createElement("code");
-          codeEl.textContent = "file:///";
-          descP.appendChild(codeEl);
-          descP.appendChild(
-            document.createTextNode(" HTML files in Chrome, please toggle "),
-          );
-          const strongEl = document.createElement("strong");
-          strongEl.textContent = '"Allow access to file URLs"';
-          descP.appendChild(strongEl);
-          descP.appendChild(document.createTextNode(" in extension details."));
-          emptyDiv.appendChild(descP);
-
-          const btnCol = document.createElement("div");
-          btnCol.className = "flex flex-col gap-1.5 w-full mt-1";
-
-          const btnDetails = document.createElement("button");
-          btnDetails.className =
-            "w-full py-2 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-xs inline-flex items-center justify-center gap-1.5 border-none";
-          btnDetails.id = "btn-open-ext-settings";
-          const settIcon = createIconElement("settings", {
-            size: 13,
-            class: "w-3.5 h-3.5",
-          });
-          if (settIcon) btnDetails.appendChild(settIcon);
-          const settSpan = document.createElement("span");
-          settSpan.textContent = "Open Extension Details";
-          btnDetails.appendChild(settSpan);
-          btnCol.appendChild(btnDetails);
-
-          const btnRow = document.createElement("div");
-          btnRow.className = "flex items-center gap-1.5 w-full";
-
-          const btnConnect = document.createElement("button");
-          btnConnect.className =
-            "flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center justify-center gap-1";
-          btnConnect.id = "btn-connect-active-tab";
-          const connIcon = createIconElement("connect", {
-            size: 12,
-            class: "w-3 h-3",
-          });
-          if (connIcon) btnConnect.appendChild(connIcon);
-          const connSpan = document.createElement("span");
-          connSpan.textContent = "Try Connecting";
-          btnConnect.appendChild(connSpan);
-
-          const btnReload = document.createElement("button");
-          btnReload.className =
-            "flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center justify-center gap-1";
-          btnReload.id = "btn-reload-active-tab";
-          const relIcon = createIconElement("refresh", {
-            size: 12,
-            class: "w-3 h-3",
-          });
-          if (relIcon) btnReload.appendChild(relIcon);
-          const relSpan = document.createElement("span");
-          relSpan.textContent = "Reload Page";
-          btnReload.appendChild(relSpan);
-
-          btnRow.appendChild(btnConnect);
-          btnRow.appendChild(btnReload);
-          btnCol.appendChild(btnRow);
-          emptyDiv.appendChild(btnCol);
-
-          pageFieldsContainer.replaceChildren(emptyDiv);
+          renderRestrictedPageState(pageFieldsContainer, tab, "file");
         } else {
-          const emptyDiv = document.createElement("div");
-          emptyDiv.className =
-            "fs-empty-state flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2 bg-white rounded-xl border border-dashed border-slate-200 shadow-2xs";
-
-          const warnIcon = createIconElement("warning", {
-            size: 32,
-            class: "text-amber-500 stroke-2",
-          });
-          if (warnIcon) emptyDiv.appendChild(warnIcon);
-
-          const p = document.createElement("p");
-          p.className = "text-xs font-medium text-slate-700";
-          const strong = document.createElement("strong");
-          strong.textContent = "Could not connect to page";
-          p.appendChild(strong);
-          p.appendChild(document.createElement("br"));
-          const small = document.createElement("small");
-          small.className = "text-slate-400";
-          small.textContent = "Click below to connect, or reload the web page.";
-          p.appendChild(small);
-          emptyDiv.appendChild(p);
-
-          if (tab && tab.id) {
-            const btnRow = document.createElement("div");
-            btnRow.className = "flex items-center gap-2 mt-1";
-
-            const btnConnect = document.createElement("button");
-            btnConnect.className =
-              "px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-xs inline-flex items-center gap-1.5 border-none";
-            btnConnect.id = "btn-connect-active-tab";
-            const connIcon = createIconElement("connect", {
-              size: 13,
-              class: "w-3.5 h-3.5",
-            });
-            if (connIcon) btnConnect.appendChild(connIcon);
-            const connSpan = document.createElement("span");
-            connSpan.textContent = "Connect to Page";
-            btnConnect.appendChild(connSpan);
-
-            const btnReload = document.createElement("button");
-            btnReload.className =
-              "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center gap-1.5";
-            btnReload.id = "btn-reload-active-tab";
-            const relIcon = createIconElement("refresh", {
-              size: 12,
-              class: "w-3 h-3",
-            });
-            if (relIcon) btnReload.appendChild(relIcon);
-            const relSpan = document.createElement("span");
-            relSpan.textContent = "Reload";
-            btnReload.appendChild(relSpan);
-
-            btnRow.appendChild(btnConnect);
-            btnRow.appendChild(btnReload);
-            emptyDiv.appendChild(btnRow);
-          }
-
-          pageFieldsContainer.replaceChildren(emptyDiv);
-        }
-
-        if (pageFieldsCount) pageFieldsCount.textContent = "0";
-        if (scannerBadge) scannerBadge.style.display = "none";
-        if (scannerActionsBar) scannerActionsBar.style.display = "none";
-        if (scannerFilterBar) scannerFilterBar.style.display = "none";
-
-        const btnOpenSettings = document.getElementById(
-          "btn-open-ext-settings",
-        );
-        if (btnOpenSettings) {
-          btnOpenSettings.addEventListener("click", () => {
-            const extId =
-              typeof chrome !== "undefined" && chrome.runtime?.id
-                ? chrome.runtime.id
-                : "";
-            if (typeof chrome !== "undefined" && chrome.tabs?.create) {
-              chrome.tabs.create({ url: `chrome://extensions/?id=${extId}` });
-            }
-          });
-        }
-
-        const btnConnect = document.getElementById("btn-connect-active-tab");
-        if (btnConnect && tab && tab.id) {
-          btnConnect.addEventListener("click", async () => {
-            btnConnect.textContent = "Connecting...";
-            (btnConnect as HTMLButtonElement).disabled = true;
-            if (
-              typeof chrome !== "undefined" &&
-              chrome.scripting &&
-              chrome.scripting.executeScript
-            ) {
-              try {
-                await chrome.scripting.executeScript({
-                  target: { tabId: tab.id },
-                  files: ["content-scripts/content.js"],
-                });
-              } catch (err) {
-                console.warn("[FormSecretary] Manual inject notice:", err);
-              }
-            }
-            setTimeout(() => {
-              scanActiveTab();
-            }, 100);
-          });
-        }
-
-        const btnReload = document.getElementById("btn-reload-active-tab");
-        if (btnReload && tab && tab.id) {
-          btnReload.addEventListener("click", () => {
-            const confirmed = confirm(
-              "Reloading this page will refresh all form inputs. Are you sure you want to reload?",
-            );
-            if (confirmed) {
-              chrome.tabs.reload(tab.id, () => window.close());
-            }
-          });
+          renderRestrictedPageState(pageFieldsContainer, tab, "disconnected");
         }
         return;
       }
@@ -1732,6 +1621,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       renderPageFields(activeTabFields);
+    };
+
+    const safetyScanTimer = setTimeout(() => {
+      if (!scanDone) {
+        scanDone = true;
+        getActiveBrowserTab((fallbackTab) => {
+          processScanResults(null, fallbackTab);
+        });
+      }
+    }, 2000);
+
+    notifyActiveTab({ action: "GET_PAGE_FIELDS" }, async (response, tab) => {
+      if (scanDone) return;
+      scanDone = true;
+      clearTimeout(safetyScanTimer);
+      processScanResults(response, tab);
     });
   }
 
@@ -2210,6 +2115,239 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function renderRestrictedPageState(
+    container: HTMLElement,
+    tab: chrome.tabs.Tab | null,
+    reason: "amo" | "restricted" | "file" | "disconnected",
+  ): void {
+    container.replaceChildren();
+
+    const card = document.createElement("div");
+    card.className =
+      "p-4 bg-white border border-slate-200/90 rounded-xl flex flex-col gap-3 shadow-2xs text-left select-text";
+
+    const header = document.createElement("div");
+    header.className = "flex items-start gap-2.5";
+
+    const icon = createIconElement(
+      reason === "file"
+        ? "warning"
+        : reason === "disconnected"
+          ? "connect"
+          : "help",
+      {
+        size: 18,
+        class:
+          reason === "file"
+            ? "text-amber-500 shrink-0 mt-0.5"
+            : "text-blue-600 shrink-0 mt-0.5",
+      },
+    );
+    if (icon) header.appendChild(icon);
+
+    const titleCol = document.createElement("div");
+    titleCol.className = "flex flex-col gap-0.5 flex-1";
+
+    const titleH4 = document.createElement("h4");
+    titleH4.className = "text-xs font-semibold text-slate-800 select-text";
+    titleH4.textContent =
+      reason === "amo"
+        ? "Firefox Protected Page (AMO)"
+        : reason === "restricted"
+          ? "Browser Protected Page"
+          : reason === "file"
+            ? "Local File Access Required"
+            : "Page Not Connected";
+    titleCol.appendChild(titleH4);
+
+    const descP = document.createElement("p");
+    descP.className = "text-[11.5px] text-slate-500 leading-normal select-text";
+    descP.textContent =
+      reason === "amo"
+        ? "Firefox restricts all browser extensions from running on addons.mozilla.org by default for security."
+        : reason === "restricted"
+          ? "Browser security policies prevent extensions from interacting with internal browser and web store pages."
+          : reason === "file"
+            ? "Browser security restricts extensions from accessing local file:/// URLs by default."
+            : "The extension could not establish a connection to this page.";
+    titleCol.appendChild(descP);
+    header.appendChild(titleCol);
+    card.appendChild(header);
+
+    const noteP = document.createElement("p");
+    noteP.className = "text-[11.5px] text-slate-600 leading-normal select-text";
+    noteP.textContent =
+      "Browser security restrictions block automated form scanning and 1-click clipboard actions on this page. You can open your Fields Manager in a separate tab, or manually highlight and copy values (Ctrl+C) from My Fields.";
+    card.appendChild(noteP);
+
+    if (reason === "amo") {
+      const amoBox = document.createElement("div");
+      amoBox.className =
+        "p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex flex-col gap-2 text-[11px] text-slate-600 leading-relaxed select-text";
+
+      const amoTitle = document.createElement("div");
+      amoTitle.className = "font-medium text-slate-700 select-text";
+      amoTitle.textContent =
+        "To allow extension access on Mozilla Add-ons Hub:";
+      amoBox.appendChild(amoTitle);
+
+      const createClickableBadge = (textToCopy: string, displayLabel?: string) => {
+        const codeEl = document.createElement("code");
+        codeEl.className =
+          "font-mono text-blue-600 bg-blue-50/90 hover:bg-blue-100 hover:text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 cursor-pointer select-all transition-all inline-flex items-center gap-1 font-medium text-[10.5px] break-all shadow-2xs";
+        codeEl.title = `Click to copy or select: "${textToCopy}"`;
+        codeEl.textContent = displayLabel || textToCopy;
+
+        codeEl.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await copyToClipboard(textToCopy);
+          showToast(`Copied ${textToCopy} to clipboard`);
+          const originalText = displayLabel || textToCopy;
+          codeEl.className =
+            "font-mono text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-400 cursor-pointer select-all transition-all inline-flex items-center gap-1 font-bold text-[10.5px] break-all shadow-xs";
+          codeEl.textContent = `Copied!`;
+
+          setTimeout(() => {
+            codeEl.className =
+              "font-mono text-blue-600 bg-blue-50/90 hover:bg-blue-100 hover:text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 cursor-pointer select-all transition-all inline-flex items-center gap-1 font-medium text-[10.5px] break-all shadow-2xs";
+            codeEl.textContent = originalText;
+          }, 1400);
+        });
+
+        return codeEl;
+      };
+
+      const step1 = document.createElement("div");
+      step1.className = "text-[11px] leading-relaxed select-text";
+      step1.appendChild(document.createTextNode("1. Open "));
+      step1.appendChild(createClickableBadge("about:config"));
+      step1.appendChild(document.createTextNode(" in Firefox."));
+      amoBox.appendChild(step1);
+
+      const step2 = document.createElement("div");
+      step2.className =
+        "text-[11px] leading-relaxed flex flex-wrap items-center gap-1 select-text";
+      step2.appendChild(document.createTextNode("2. Search:"));
+      step2.appendChild(
+        createClickableBadge("extensions.webextensions.restrictedDomains"),
+      );
+      amoBox.appendChild(step2);
+
+      const step3 = document.createElement("div");
+      step3.className = "text-[11px] text-slate-500 leading-relaxed select-text";
+      step3.textContent =
+        "3. Remove addons.mozilla.org from the list, then reload this page.";
+      amoBox.appendChild(step3);
+
+      card.appendChild(amoBox);
+    }
+
+    const actionsRow = document.createElement("div");
+    actionsRow.className =
+      "flex items-center gap-2 pt-1 border-t border-slate-100";
+
+    const btnGoMyFields = document.createElement("button");
+    btnGoMyFields.className =
+      "px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-xs inline-flex items-center gap-1.5 border-none";
+    const listIcon = createIconElement("fields", { size: 13 });
+    if (listIcon) btnGoMyFields.appendChild(listIcon);
+    const myFieldsSpan = document.createElement("span");
+    myFieldsSpan.textContent = "Go to My Fields";
+    btnGoMyFields.appendChild(myFieldsSpan);
+    btnGoMyFields.addEventListener("click", () => {
+      switchToTab("rules");
+    });
+    actionsRow.appendChild(btnGoMyFields);
+
+    if (reason === "amo" || reason === "restricted") {
+      const btnOpenManager = document.createElement("button");
+      btnOpenManager.className =
+        "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center gap-1.5";
+      const extIcon = createIconElement("export", { size: 13 });
+      if (extIcon) btnOpenManager.appendChild(extIcon);
+      const managerSpan = document.createElement("span");
+      managerSpan.textContent = "Open in New Tab";
+      btnOpenManager.appendChild(managerSpan);
+      btnOpenManager.title = "Open Fields Manager in a dedicated browser tab";
+      btnOpenManager.addEventListener("click", () => {
+        if (
+          typeof chrome !== "undefined" &&
+          chrome.runtime &&
+          chrome.runtime.openOptionsPage
+        ) {
+          chrome.runtime.openOptionsPage();
+        } else if (
+          typeof chrome !== "undefined" &&
+          chrome.tabs &&
+          chrome.tabs.create
+        ) {
+          chrome.tabs.create({
+            url: chrome.runtime.getURL("options.html"),
+          });
+        } else {
+          window.open("options.html", "_blank");
+        }
+      });
+      actionsRow.appendChild(btnOpenManager);
+    }
+
+    if (reason === "file") {
+      const btnOpenExt = document.createElement("button");
+      btnOpenExt.className =
+        "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center gap-1.5";
+      const settIcon = createIconElement("settings", { size: 13 });
+      if (settIcon) btnOpenExt.appendChild(settIcon);
+      const span = document.createElement("span");
+      span.textContent = "Extension Details";
+      btnOpenExt.appendChild(span);
+      btnOpenExt.addEventListener("click", () => {
+        const extId =
+          typeof chrome !== "undefined" && chrome.runtime?.id
+            ? chrome.runtime.id
+            : "";
+        if (typeof chrome !== "undefined" && chrome.tabs?.create) {
+          chrome.tabs.create({ url: `chrome://extensions/?id=${extId}` });
+        }
+      });
+      actionsRow.appendChild(btnOpenExt);
+    } else if (reason === "disconnected" && tab && tab.id) {
+      const btnConn = document.createElement("button");
+      btnConn.className =
+        "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-all cursor-pointer border border-slate-200 inline-flex items-center gap-1.5";
+      const connIcon = createIconElement("connect", { size: 13 });
+      if (connIcon) btnConn.appendChild(connIcon);
+      const connSpan = document.createElement("span");
+      connSpan.textContent = "Try Connecting";
+      btnConn.appendChild(connSpan);
+      btnConn.addEventListener("click", async () => {
+        btnConn.textContent = "Connecting...";
+        (btnConn as HTMLButtonElement).disabled = true;
+        if (
+          typeof chrome !== "undefined" &&
+          chrome.scripting &&
+          chrome.scripting.executeScript
+        ) {
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["content-scripts/content.js"],
+            });
+          } catch (e) {}
+        }
+        setTimeout(() => scanActiveTab(), 100);
+      });
+      actionsRow.appendChild(btnConn);
+    }
+
+    card.appendChild(actionsRow);
+    container.appendChild(card);
+
+    if (pageFieldsCount) pageFieldsCount.textContent = "0";
+    if (scannerBadge) scannerBadge.style.display = "none";
+    if (scannerActionsBar) scannerActionsBar.style.display = "none";
+    if (scannerFilterBar) scannerFilterBar.style.display = "none";
+  }
+
   function getActiveBrowserTab(
     callback: (tab: chrome.tabs.Tab | null) => void,
   ): void {
@@ -2218,21 +2356,41 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs && tabs.length > 0 && tabs[0]?.id) {
-        callback(tabs[0]);
-        return;
+    let finished = false;
+    const safeCall = (tab: chrome.tabs.Tab | null) => {
+      if (!finished) {
+        finished = true;
+        callback(tab);
       }
-      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs2) => {
-        if (tabs2 && tabs2.length > 0 && tabs2[0]?.id) {
-          callback(tabs2[0]);
+    };
+
+    const timer = setTimeout(() => {
+      safeCall(null);
+    }, 1200);
+
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs.length > 0 && tabs[0]?.id) {
+          clearTimeout(timer);
+          safeCall(tabs[0]);
           return;
         }
-        chrome.tabs.query({ active: true }, (tabs3) => {
-          callback(tabs3 && tabs3.length > 0 && tabs3[0] ? tabs3[0] : null);
+        chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs2) => {
+          if (tabs2 && tabs2.length > 0 && tabs2[0]?.id) {
+            clearTimeout(timer);
+            safeCall(tabs2[0]);
+            return;
+          }
+          chrome.tabs.query({ active: true }, (tabs3) => {
+            clearTimeout(timer);
+            safeCall(tabs3 && tabs3.length > 0 && tabs3[0] ? tabs3[0] : null);
+          });
         });
       });
-    });
+    } catch (e) {
+      clearTimeout(timer);
+      safeCall(null);
+    }
   }
 
   function notifyActiveTab(
@@ -2282,45 +2440,100 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Safety timeout: prevent scan from hanging indefinitely if tab is unresponsive
     const safetyTimer = setTimeout(() => {
       safeCallback(null, tab);
-    }, isRetry ? 1200 : 2000);
+    }, isRetry ? 1200 : 1800);
+
+    const tabsAPI =
+      (typeof browser !== "undefined" && (browser as any).tabs) ||
+      (typeof chrome !== "undefined" && chrome.tabs) ||
+      null;
+
+    if (!tabsAPI || !tabsAPI.sendMessage) {
+      clearTimeout(safetyTimer);
+      safeCallback(null, tab);
+      return;
+    }
+
+    const tryInjectAndRetry = () => {
+      if (isRetry || !tab.id) {
+        safeCallback(null, tab);
+        return;
+      }
+
+      if (
+        typeof chrome !== "undefined" &&
+        chrome.scripting &&
+        chrome.scripting.executeScript
+      ) {
+        chrome.scripting
+          .executeScript({
+            target: { tabId: tab.id },
+            files: ["content-scripts/content.js"],
+          })
+          .then(() => {
+            setTimeout(() => {
+              dispatchMessageToTab(tab, message, safeCallback, true);
+            }, 100);
+          })
+          .catch((err) => {
+            console.warn("[FormSecretary] Auto-inject error:", err);
+            safeCallback(null, tab);
+          });
+      } else if (tabsAPI && tabsAPI.executeScript) {
+        try {
+          const res = tabsAPI.executeScript(tab.id, {
+            file: "content-scripts/content.js",
+          });
+          if (res && typeof res.then === "function") {
+            res
+              .then(() => {
+                setTimeout(() => {
+                  dispatchMessageToTab(tab, message, safeCallback, true);
+                }, 100);
+              })
+              .catch(() => safeCallback(null, tab));
+          } else {
+            setTimeout(() => {
+              dispatchMessageToTab(tab, message, safeCallback, true);
+            }, 100);
+          }
+        } catch (e) {
+          safeCallback(null, tab);
+        }
+      } else {
+        safeCallback(null, tab);
+      }
+    };
 
     try {
-      chrome.tabs.sendMessage(
-        tab.id,
-        message,
-        (response: ExtensionMessageResponse) => {
-          clearTimeout(safetyTimer);
-          if (chrome.runtime.lastError || !response) {
-            // If sending message failed, attempt dynamic script injection and retry once automatically
-            if (
-              !isRetry &&
-              typeof chrome !== "undefined" &&
-              chrome.scripting &&
-              chrome.scripting.executeScript &&
-              tab.id
-            ) {
-              chrome.scripting
-                .executeScript({
-                  target: { tabId: tab.id },
-                  files: ["content-scripts/content.js"],
-                })
-                .then(() => {
-                  setTimeout(() => {
-                    dispatchMessageToTab(tab, message, safeCallback, true);
-                  }, 100);
-                })
-                .catch((err) => {
-                  console.warn("[FormSecretary] Auto-inject error:", err);
-                  safeCallback(null, tab);
-                });
+      let msgSent = false;
+      const sendPromise = tabsAPI.sendMessage(tab.id, message, (response: any) => {
+        msgSent = true;
+        clearTimeout(safetyTimer);
+        const runtimeAPI =
+          (typeof chrome !== "undefined" && chrome.runtime) ||
+          (typeof browser !== "undefined" && (browser as any).runtime);
+        if (runtimeAPI?.lastError || !response) {
+          tryInjectAndRetry();
+        } else {
+          safeCallback(response, tab);
+        }
+      });
+
+      if (sendPromise && typeof sendPromise.then === "function" && !msgSent) {
+        sendPromise
+          .then((response: any) => {
+            clearTimeout(safetyTimer);
+            if (!response) {
+              tryInjectAndRetry();
             } else {
-              safeCallback(null, tab);
+              safeCallback(response, tab);
             }
-          } else {
-            safeCallback(response, tab);
-          }
-        },
-      );
+          })
+          .catch(() => {
+            clearTimeout(safetyTimer);
+            tryInjectAndRetry();
+          });
+      }
     } catch (e) {
       clearTimeout(safetyTimer);
       safeCallback(null, tab);

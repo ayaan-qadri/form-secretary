@@ -859,5 +859,48 @@ describe("FormSecretaryMatcher", () => {
       assert.strictEqual(selectMeta.type, "select");
       assert.strictEqual(selectMeta.options?.length, 2);
     });
+
+    it("extracts labels from table th and cleans tooltip question marks like Mozilla Add-on Hub", () => {
+      const table = new MockElement("table");
+      const tbody = new MockElement("tbody");
+      const tr = new MockElement("tr");
+      const th = new MockElement("th");
+      const labelSpan = new MockElement("span");
+      labelSpan.className = "label";
+      labelSpan.innerText = "Add-on URL";
+      const tooltipSpan = new MockElement("span");
+      tooltipSpan.className = "tip tooltip";
+      tooltipSpan.innerText = "?";
+      th.appendChild(labelSpan);
+      th.appendChild(tooltipSpan);
+
+      const td = new MockElement("td");
+      const divWrapper = new MockElement("div");
+      divWrapper.className = "edit_with_prefix";
+      const prefixSpan = new MockElement("span");
+      prefixSpan.innerText = "https://addons.mozilla.org/…/";
+      const input = new MockElement("input");
+      input.type = "text";
+      input.name = "slug";
+      input.id = "id_slug";
+      input.value = "form-secretary";
+      divWrapper.appendChild(prefixSpan);
+      divWrapper.appendChild(input);
+      td.appendChild(divWrapper);
+
+      tr.appendChild(th);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      table.appendChild(tbody);
+      globalThis.document.documentElement.appendChild(table);
+
+      const extractedLabel = matcher.findLabelForElement(input);
+      assert.strictEqual(extractedLabel, "Add-on URL");
+
+      const meta = matcher.extractFieldMetadata(input);
+      assert.ok(meta);
+      assert.strictEqual(meta.rawLabel, "Add-on URL");
+      assert.strictEqual(meta.name, "slug");
+    });
   });
 });
