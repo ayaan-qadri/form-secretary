@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Secretary</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body
+    class="bg-slate-50 text-slate-800 antialiased select-none w-[420px] h-[560px] flex flex-col m-0 p-0 overflow-hidden"
+  >
+    <div class="flex flex-col w-full h-full relative overflow-hidden">
+      <!-- Header -->
+      <header
+        class="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200/80 shadow-xs z-20 shrink-0"
+      >
+        <div class="flex items-center gap-2.5">
+          <img
+            src="/icons/icon48.png"
+            alt="Form Secretary"
+            class="w-7 h-7 rounded-lg shadow-xs shrink-0"
+          />
+          <div class="flex flex-col">
+            <h1
+              class="text-sm font-bold text-slate-900 leading-tight tracking-tight"
+            >
+              Form Secretary
+            </h1>
+            <span class="text-[10.5px] text-slate-500 font-medium"
+              >Smart Autofill Assistant</span
+            >
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            class="w-8 h-8 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-95 flex items-center justify-center transition-all cursor-pointer border-none bg-transparent"
+            id="btn-header-settings"
+            title="Settings"
+          >
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+          <label class="fs-switch" title="Toggle Extension On/Off">
+            <input type="checkbox" id="global-toggle" checked />
+            <span class="fs-slider"></span>
+          </label>
+        </div>
+      </header>
+
+      <!-- Segmented Navigation Tabs -->
+      <nav
+        class="flex items-center p-1 mx-3.5 my-2.5 bg-slate-200/70 rounded-xl gap-1 shrink-0"
+      >
+        <button
+          class="fs-tab-btn active flex-1 py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 cursor-pointer border-none bg-transparent"
+          data-tab="rules"
+        >
+          <i data-lucide="fields" class="w-3.5 h-3.5"></i>
+          <span>My Fields</span>
+        </button>
+        <button
+          class="fs-tab-btn flex-1 py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1.5 cursor-pointer border-none bg-transparent relative"
+          data-tab="page-scanner"
+        >
+          <i data-lucide="scanner" class="w-3.5 h-3.5"></i>
+          <span>Page Scanner</span>
+          <span
+            class="w-2 h-2 rounded-full bg-blue-600 absolute top-1.5 right-2"
+            id="scanner-badge"
+            style="display: none"
+          ></span>
+        </button>
+      </nav>
+
+      <!-- Tab 1: Fields Manager -->
+      <main
+        class="fs-tab-content flex-1 flex flex-col overflow-hidden active"
+        id="tab-rules"
+      >
+        <!-- Fixed Sticky Filter Bar -->
+        <div
+          class="px-3.5 pb-2.5 pt-0.5 flex flex-col gap-2 shrink-0 bg-slate-50"
+        >
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <i
+                data-lucide="search"
+                class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+              ></i>
+              <input
+                type="text"
+                id="rule-search-input"
+                placeholder="Search fields or values..."
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs transition-all"
+              />
+            </div>
+            <button
+              class="fs-btn-primary px-3.5 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer border-none"
+              id="btn-open-add-modal"
+              title="Add New Field"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+
+          <!-- Category Filter Chips -->
+          <div class="overflow-x-auto no-scrollbar py-0.5">
+            <div class="flex items-center gap-1.5" id="category-chips">
+              <!-- Dynamically rendered category chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable Fields List -->
+        <div
+          class="flex-1 overflow-y-auto px-3.5 pb-3 flex flex-col gap-2"
+          id="rules-container"
+        >
+          <!-- Dynamically rendered field cards -->
+        </div>
+      </main>
+
+      <!-- Tab 2: Page Scanner -->
+      <section
+        class="fs-tab-content flex-1 flex flex-col overflow-hidden hidden"
+        id="tab-page-scanner"
+      >
+        <div
+          class="px-3.5 py-2.5 flex flex-col gap-2 shrink-0 bg-slate-50 border-b border-slate-200/60"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span
+                class="px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-700 rounded-full"
+                id="page-fields-count"
+                >0</span
+              >
+              <span class="text-xs font-medium text-slate-600"
+                >detected inputs on page</span
+              >
+            </div>
+            <button
+              class="px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 active:scale-95 border border-slate-200 rounded-lg flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              id="btn-refresh-scanner"
+              title="Rescan Active Tab"
+            >
+              <i data-lucide="refresh" class="w-3.5 h-3.5"></i>
+              <span>Rescan</span>
+            </button>
+          </div>
+
+          <div class="w-full flex items-center gap-2" id="scanner-actions-bar" style="display: none">
+            <button
+              class="fs-btn-primary flex-1 h-8 px-2.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 cursor-pointer border-none shadow-2xs whitespace-nowrap"
+              id="btn-fill-all-page"
+            >
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">Autofill All</span>
+            </button>
+            <button
+              class="flex-1 h-8 px-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 active:scale-95 border border-slate-200 rounded-lg flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer whitespace-nowrap"
+              id="btn-save-all-fields"
+              title="Save all detected fields to My Fields with default options"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">Save All Fields</span>
+            </button>
+          </div>
+
+          <!-- Scanner Filter Chips: All, Saved, Filled, Empty -->
+          <div class="overflow-x-auto py-0.5" id="scanner-filter-bar" style="display: none">
+            <div class="flex items-center gap-1.5" id="scanner-filter-chips">
+              <!-- Dynamically rendered filter chips -->
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="flex-1 overflow-y-auto px-3.5 py-2.5 flex flex-col gap-2"
+          id="page-fields-container"
+        >
+          <!-- Dynamically rendered detected fields -->
+        </div>
+        <datalist id="fs-saved-datalist"></datalist>
+      </section>
+
+      <!-- Tab 3: Settings & Backup -->
+      <section
+        class="fs-tab-content flex-1 overflow-y-auto px-3.5 py-3 flex flex-col gap-4 hidden"
+        id="tab-settings"
+      >
+        <!-- Category Manager -->
+        <div
+          class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col gap-2.5"
+        >
+          <h2 class="text-xs font-bold text-slate-900 tracking-tight uppercase">
+            Manage Categories
+          </h2>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              id="new-category-input"
+              placeholder="New category name..."
+              autocomplete="off"
+              class="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            />
+            <button
+              class="fs-btn-primary px-3.5 py-1.5 text-xs font-semibold rounded-lg shrink-0 flex items-center gap-1 cursor-pointer border-none"
+              id="btn-add-category"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div
+            class="flex flex-col gap-1.5 max-h-32 overflow-y-auto"
+            id="category-manage-list"
+          >
+            <!-- Dynamic category list items -->
+          </div>
+        </div>
+
+        <!-- Preferences -->
+        <div
+          class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col gap-3"
+        >
+          <h2 class="text-xs font-bold text-slate-900 tracking-tight uppercase">
+            Preferences
+          </h2>
+
+          <div class="flex items-center justify-between py-1">
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-slate-800"
+                >Show Inline Trigger</span
+              >
+              <span class="text-[11px] text-slate-500"
+                >Floating magic button near focused inputs</span
+              >
+            </div>
+            <label class="fs-switch">
+              <input type="checkbox" id="setting-inline-btn" checked />
+              <span class="fs-slider"></span>
+            </label>
+          </div>
+
+          <div
+            class="flex items-center justify-between py-1 border-t border-slate-100"
+          >
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-slate-800"
+                >Highlight Filled Fields</span
+              >
+              <span class="text-[11px] text-slate-500"
+                >Glow inputs briefly when autofilled</span
+              >
+            </div>
+            <label class="fs-switch">
+              <input type="checkbox" id="setting-highlight" checked />
+              <span class="fs-slider"></span>
+            </label>
+          </div>
+
+          <div
+            class="flex items-center justify-between py-1 border-t border-slate-100"
+          >
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-slate-800"
+                >Floating Page Bar</span
+              >
+              <span class="text-[11px] text-slate-500"
+                >Show mass-fill pill at page bottom</span
+              >
+            </div>
+            <label class="fs-switch">
+              <input type="checkbox" id="setting-floating-bar" />
+              <span class="fs-slider"></span>
+            </label>
+          </div>
+
+          <div
+            class="flex items-center justify-between py-1 border-t border-slate-100"
+          >
+            <div class="flex flex-col">
+              <span class="text-xs font-semibold text-slate-800"
+                >Hide Trigger When Typed</span
+              >
+              <span class="text-[11px] text-slate-500"
+                >Hide button when field has this many chars</span
+              >
+            </div>
+            <div class="flex items-center gap-1.5">
+              <input
+                type="number"
+                id="setting-max-chars"
+                min="1"
+                max="20"
+                value="3"
+                class="w-12 px-2 py-1 text-xs text-center font-medium bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+              <span class="text-xs text-slate-500">chars</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div
+          class="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col gap-2.5"
+        >
+          <h2 class="text-xs font-bold text-slate-900 tracking-tight uppercase">
+            Backup & Restore
+          </h2>
+          <div class="flex items-center gap-2">
+            <button
+              class="flex-1 py-1.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 active:scale-95 border border-slate-200 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              id="btn-export-data"
+            >
+              <i data-lucide="export" class="w-3.5 h-3.5"></i>
+              <span>Export Fields</span>
+            </button>
+            <label
+              class="flex-1 py-1.5 px-3 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 active:scale-95 border border-slate-200 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              id="btn-import-label"
+            >
+              <i data-lucide="import" class="w-3.5 h-3.5"></i>
+              <span>Import Fields</span>
+              <input
+                type="file"
+                id="import-file-input"
+                accept=".json"
+                class="hidden"
+              />
+            </label>
+          </div>
+          <button
+            class="w-full py-1.5 px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 active:scale-95 border border-rose-200 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-white"
+            id="btn-delete-all-rules"
+          >
+            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+            <span>Delete All Fields</span>
+          </button>
+        </div>
+
+        <div class="text-center text-[10px] text-slate-400 py-1">
+          <span>Form Secretary • Built with WXT & Tailwind</span>
+        </div>
+      </section>
+
+      <!-- Field Edit/Create Modal -->
+      <div
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 z-50 transition-opacity"
+        id="rule-modal"
+        style="display: none"
+      >
+        <form
+          id="rule-form"
+          class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-h-[500px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div
+            class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0"
+          >
+            <h2 class="text-sm font-bold text-slate-900" id="modal-title">
+              Add New Field
+            </h2>
+            <div class="flex items-center gap-2">
+              <button
+                type="submit"
+                class="fs-btn-primary px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer border-none flex items-center gap-1.5 shadow-2xs"
+                id="btn-modal-save"
+              >
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save</span>
+              </button>
+              <button
+                type="button"
+                class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer border-none bg-transparent"
+                id="btn-modal-close"
+                title="Close"
+              >
+                <i data-lucide="close" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+          <div
+            class="flex-1 overflow-y-auto p-4 flex flex-col gap-3"
+          >
+            <input type="hidden" id="form-rule-id" />
+
+            <div class="flex flex-col gap-1">
+              <label
+                for="form-rule-label"
+                class="text-xs font-semibold text-slate-700"
+                >Field Name</label
+              >
+              <input
+                type="text"
+                id="form-rule-label"
+                placeholder="e.g. Full Name, Email, LinkedIn"
+                required
+                autocomplete="off"
+                class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label
+                for="form-rule-value"
+                class="text-xs font-semibold text-slate-700"
+                >Field Value</label
+              >
+              <textarea
+                id="form-rule-value"
+                rows="2"
+                placeholder="Value to autofill into web forms"
+                required
+                class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+              ></textarea>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label
+                for="form-rule-category"
+                class="text-xs font-semibold text-slate-700"
+                >Category</label
+              >
+              <select
+                id="form-rule-category"
+                class="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+              >
+                <!-- Dynamically populated categories -->
+              </select>
+            </div>
+
+            <!-- Advanced Matching Section -->
+            <div
+              class="bg-slate-50/80 p-3 rounded-xl border border-slate-200/70 flex flex-col gap-2.5"
+            >
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5"
+                ><i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-500"></i><span>Matching Rules</span></span
+              >
+
+              <!-- 1. Matching Mode dropdown -->
+              <div class="flex flex-col gap-1">
+                <label
+                  for="form-rule-match-type"
+                  class="text-[11px] font-semibold text-slate-600"
+                  >Matching Mode</label
+                >
+                <select
+                  id="form-rule-match-type"
+                  class="px-2.5 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                >
+                  <option value="smart">
+                    Smart Automatic Matching (Recommended)
+                  </option>
+                  <option value="contains">Contains Word(s)</option>
+                  <option value="exact">Exact Match Only</option>
+                  <option value="regex">Regular Expression (Advanced)</option>
+                </select>
+                <span
+                  class="text-[10px] text-slate-500"
+                  id="form-match-type-desc"
+                  >Intelligently scans form labels, placeholders, input
+                  names, and common synonyms to find the best match.</span
+                >
+              </div>
+
+              <!-- 2. Dynamic Input based on Selected Mode -->
+              <div class="flex flex-col gap-1">
+                <label
+                  for="form-tag-text-input"
+                  id="form-pattern-label"
+                  class="text-[11px] font-semibold text-slate-600"
+                  >Extra Synonyms & Keywords (Optional)</label
+                >
+                <input type="hidden" id="form-rule-pattern" />
+
+                <!-- Interactive Word/Tag Input for Smart, Contains, Exact -->
+                <div
+                  class="min-h-[34px] p-1.5 bg-white border border-slate-200 rounded-lg flex flex-wrap items-center gap-1.5"
+                  id="form-tag-container"
+                >
+                  <div
+                    class="flex flex-wrap items-center gap-1"
+                    id="form-tags-list"
+                  ></div>
+                  <input
+                    type="text"
+                    class="flex-1 min-w-[80px] text-xs border-none outline-none bg-transparent p-0.5 text-slate-800 placeholder-slate-400"
+                    id="form-tag-text-input"
+                    placeholder="Type word + Enter..."
+                    autocomplete="off"
+                  />
+                </div>
+
+                <!-- Direct Regex Input for Regex Mode -->
+                <input
+                  type="text"
+                  id="form-regex-input"
+                  placeholder="e.g. ^(phone|mobile|tel)$"
+                  style="display: none"
+                  autocomplete="off"
+                  class="px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+
+                <span class="text-[10px] text-slate-500" id="form-pattern-help"
+                  >Leave empty to automatically match using the Field Name</span
+                >
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Notification Toast -->
+      <div
+        class="fixed bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 backdrop-blur text-white text-xs font-medium rounded-full shadow-lg pointer-events-none z-50 transition-all max-w-[82%] truncate text-center"
+        id="popup-toast"
+        style="display: none"
+      ></div>
+
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

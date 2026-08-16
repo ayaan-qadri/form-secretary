@@ -1,0 +1,101 @@
+@import "../../styles/main.css";
+
+@layer components {
+
+  /* Popup fixed canvas dimensions */
+  html,
+  body {
+    width: 420px;
+    height: 560px;
+    overflow: hidden;
+    background-color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+
+
+  /* Segmented Nav & Tab Active States */
+  .fs-tab-btn {
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fs-tab-btn:hover {
+    color: #0f172a;
+  }
+
+  .fs-tab-btn.active {
+    background-color: #ffffff;
+    color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .fs-tab-content.active {
+    display: flex !important;
+  }
+
+  .fs-tab-content:not(.active) {
+    display: none !important;
+  }
+
+  /* Category Filter Chips */
+  .fs-chip {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    background-color: #ffffff;
+    color: #475569;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fs-chip:hover:not(.active) {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+  }
+
+  .fs-chip.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
+  }
+
+  /* Micro-interactions */
+  .fs-fill-success {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3) !important;
+  }
+
+  .fs-spinning {
+    animation: spin 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Compact Notification Toast */
+  #popup-toast {
+    max-width: 82%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}

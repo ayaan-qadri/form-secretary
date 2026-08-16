@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  /* Sleek modern scrollbars */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+@layer components {
+  /* Modern Lucide Vector Icons */
+  .lucide-icon,
+  .fs-icon {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* Brand Primary Buttons - Matching official logo gradient */
+  .fs-btn-primary, .btn-brand-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25), 0 1px 2px rgba(37, 99, 235, 0.15);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .fs-btn-primary:hover, .btn-brand-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.35);
+    transform: translateY(-0.5px);
+  }
+  .fs-btn-primary:active, .btn-brand-primary:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+  }
+
+  /* Clean Switch Component */
+  .fs-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .fs-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .fs-slider {
+    position: absolute;
+    inset: 0;
+    background-color: #cbd5e1;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 9999px;
+  }
+  .fs-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+  .fs-switch input:checked + .fs-slider {
+    background-color: #10b981;
+  }
+  .fs-switch input:checked + .fs-slider:before {
+    transform: translateX(14px);
+  }
+
+  /* Tag list chips inside modal */
+  .fs-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .fs-tag-chip .fs-tag-remove {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+  }
+  .fs-tag-chip .fs-tag-remove:hover {
+    opacity: 1;
+    color: #ef4444;
+  }
+
+  /* Copy Flash Feedback */
+  .fs-copied-flash {
+    animation: flashCopy 0.4s ease;
+  }
+
+  @keyframes flashCopy {
+    0% { background-color: #dbeafe; }
+    100% { background-color: transparent; }
+  }
+}
