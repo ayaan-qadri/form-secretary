@@ -1,0 +1,6 @@
+# Form Secretary robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://ayaan-qadri.github.io/form-secretary/sitemap.xml

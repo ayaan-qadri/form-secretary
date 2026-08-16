@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>Form Secretary | 1-Click Form Autofill Browser Extension</title>
+  <meta name="title" content="Form Secretary | 1-Click Form Autofill Browser Extension">
+  <meta name="description" content="Autofill job applications, signups, and web forms in 1 click. Save custom fields, match forms automatically, and keep your data 100% private on your computer.">
+  <meta name="keywords" content="form autofill, custom form filler, job application autofill, workday autofill, greenhouse autofill, browser extension, chrome form filler, privacy friendly autofill">
+  <meta name="author" content="Ayaan Qadri">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://ayaan-qadri.github.io/form-secretary/">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icon16.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="assets/icon128.png">
+
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ayaan-qadri.github.io/form-secretary/">
+  <meta property="og:title" content="Form Secretary | 1-Click Form Autofill Browser Extension">
+  <meta property="og:description" content="Stop retyping the same information on every form. Form Secretary fills job applications and web forms with one click. 100% local and private.">
+  <meta property="og:image" content="https://ayaan-qadri.github.io/form-secretary/assets/icon128.png">
+  <meta property="og:site_name" content="Form Secretary">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://ayaan-qadri.github.io/form-secretary/">
+  <meta name="twitter:title" content="Form Secretary | 1-Click Form Autofill Browser Extension">
+  <meta name="twitter:description" content="Autofill web forms and job applications in one click. 100% local browser storage.">
+  <meta name="twitter:image" content="https://ayaan-qadri.github.io/form-secretary/assets/icon128.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <!-- JSON-LD Structured Data for Google Indexing -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Form Secretary",
+        "operatingSystem": "Chrome, Brave, Edge, Firefox, Arc, Opera",
+        "applicationCategory": "BrowserApplication",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "A smart browser extension to store your information and 1-click autofill web forms and job applications.",
+        "url": "https://ayaan-qadri.github.io/form-secretary/",
+        "author": {
+          "@type": "Person",
+          "name": "Ayaan Qadri"
+        },
+        "license": "https://opensource.org/licenses/MIT"
+      },
+      {
+        "@type": "WebSite",
+        "name": "Form Secretary",
+        "url": "https://ayaan-qadri.github.io/form-secretary/"
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="#" class="brand" aria-label="Form Secretary Home">
+        <img src="assets/icon32.png" alt="Form Secretary Logo" class="brand-icon" width="32" height="32">
+        <span>Form Secretary</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#installation" class="nav-link">Installation</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-secondary btn-sm nav-btn-github" target="_blank" rel="noopener noreferrer" id="nav-github-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+        <a href="#installation" class="btn btn-primary btn-sm nav-btn-install" id="nav-install-cta">Get Extension</a>
+        <button class="mobile-toggle" aria-label="Toggle Navigation Menu" id="mobile-nav-toggle" aria-expanded="false" aria-controls="main-nav-links">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <div class="badge badge-success">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Free & Open Source</span>
+          </div>
+
+          <h1 id="hero-title">Autofill any form with one click. Even the ones regular autofill ignores.</h1>
+
+          <p class="hero-lead">
+            Tired of copying and pasting your links, cover notes, and details across job applications and repetitive portals? Form Secretary remembers your info and fills forms with a single click.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#installation" class="btn btn-primary" id="hero-install-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Get the Extension (Free)</span>
+            </a>
+            <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" id="hero-github-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span>View on GitHub</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-preview">
+          <div class="hero-image-wrapper">
+            <img src="assets/auto-fill.png" alt="Form Secretary extension in action autofilling form fields" class="hero-image" width="447" height="616" loading="eager">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works (Simple 3-Step Guide) -->
+    <section id="how-it-works" class="section" aria-labelledby="steps-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge">Simple Workflow</div>
+          <h2 id="steps-title">How Form Secretary works in 3 easy steps.</h2>
+          <p>No complicated setup. Save your information once and let the extension do the typing.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <span style="font-weight: 700; font-size: 1.1rem;">1</span>
+            </div>
+            <h3>Save your details</h3>
+            <p>Add your links, emails, bios, work history, or test data into your personal library.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <span style="font-weight: 700; font-size: 1.1rem;">2</span>
+            </div>
+            <h3>See the smart button</h3>
+            <p>When you click on any input field on a web page, a neat little icon appears right beside it.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <span style="font-weight: 700; font-size: 1.1rem;">3</span>
+            </div>
+            <h3>Click and fill</h3>
+            <p>Click the icon to fill that field instantly, or click Autofill All in the popup to fill the whole page.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Users Love It / Core Features -->
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge">Features</div>
+          <h2 id="features-title">Why you will love Form Secretary.</h2>
+          <p>Built to save you time on every single form you fill online.</p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Feature 1 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+            </div>
+            <h3>Saves hours on job applications</h3>
+            <p>Fill application forms on Workday, Greenhouse, Lever, Ashby, and company career sites without retyping your answers every time.</p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>100% private to you</h3>
+            <p>Your saved entries stay entirely inside your browser. No accounts, no cloud sync, and no third-party tracking.</p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h3>Smart field recognition</h3>
+            <p>It recognizes what the form is asking for by looking at labels, hints, and placeholders, even if the website uses unusual code.</p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3>Works where other tools fail</h3>
+            <p>Modern forms sometimes reject normal copy-paste or standard autofill. Form Secretary ensures the page accepts your text smoothly.</p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><circle cx="4" cy="14" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="20" cy="16" r="2"/></svg>
+            </div>
+            <h3>Quick choice dropdown</h3>
+            <p>If you have multiple emails, phone numbers, or addresses, a neat menu lets you pick the right one in an instant.</p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3>Easy backup & restore</h3>
+            <p>Switching laptops or browsers? Export your saved fields with one click and import them back anytime.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screenshot & UI Showcase -->
+    <section class="section" aria-labelledby="screenshots-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge">Preview</div>
+          <h2 id="screenshots-title">Simple interface, out of your way.</h2>
+          <p>Form Secretary stays quiet until you need it.</p>
+        </div>
+
+        <div class="showcase-grid">
+          <!-- Screenshot 1 -->
+          <div class="showcase-card">
+            <div class="showcase-img-box">
+              <img src="assets/main-popup-page.png" alt="Form Secretary popup interface with active page scanner and shortcuts" class="showcase-img" width="441" height="628" loading="lazy">
+            </div>
+            <div class="showcase-details">
+              <h4>Page Scanner & Shortcuts</h4>
+              <p>Quickly scan the current page and manage your saved information in one clean window.</p>
+            </div>
+          </div>
+
+          <!-- Screenshot 2 -->
+          <div class="showcase-card">
+            <div class="showcase-img-box">
+              <img src="assets/fill-trigger.png" alt="Floating 1-click trigger button appearing beside form input" class="showcase-img" width="525" height="517" loading="lazy">
+            </div>
+            <div class="showcase-details">
+              <h4>1-Click Trigger Button</h4>
+              <p>Appears right beside the box you are typing into so you can fill it without opening any menus.</p>
+            </div>
+          </div>
+
+          <!-- Screenshot 3 -->
+          <div class="showcase-card">
+            <div class="showcase-img-box">
+              <img src="assets/settings.png" alt="Form Secretary settings and custom categories management" class="showcase-img" width="447" height="619" loading="lazy">
+            </div>
+            <div class="showcase-details">
+              <h4>Custom Fields & Categories</h4>
+              <p>Organize your details into Job Search, Personal, or Work categories with custom names.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation & Setup Guide -->
+    <section id="installation" class="section" aria-labelledby="install-title">
+      <div class="container">
+        <div class="section-header">
+          <div class="badge">Installation</div>
+          <h2 id="install-title">Get started in under two minutes.</h2>
+          <p>Follow these quick instructions to install Form Secretary in your browser.</p>
+        </div>
+
+        <div class="install-card">
+          <div class="tabs-nav" role="tablist">
+            <button class="tab-btn active" data-tab="chromium" role="tab" aria-selected="true" aria-controls="tab-chromium">Chrome / Brave / Edge</button>
+            <button class="tab-btn" data-tab="firefox" role="tab" aria-selected="false" aria-controls="tab-firefox">Mozilla Firefox</button>
+            <button class="tab-btn" data-tab="source" role="tab" aria-selected="false" aria-controls="tab-source">Build from Source</button>
+          </div>
+
+          <!-- Tab 1: Chromium -->
+          <div id="tab-chromium" class="tab-panel active" role="tabpanel">
+            <ul class="install-steps">
+              <li class="install-step">
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <p><strong>Download or clone the repository:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="git clone https://github.com/ayaan-qadri/form-secretary.git" aria-label="Click to copy command">
+                    <code>git clone https://github.com/ayaan-qadri/form-secretary.git</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <p><strong>Install dependencies:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm install" aria-label="Click to copy command">
+                    <code>pnpm install</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">3</span>
+                <div class="step-text">
+                  <p><strong>Build the extension:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm build" aria-label="Click to copy command">
+                    <code>pnpm build</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">4</span>
+                <div class="step-text">
+                  <p><strong>Load into your browser:</strong></p>
+                  <p>Go to <a href="chrome://extensions" target="_blank" rel="noopener noreferrer" class="copyable-inline-link" data-copy="chrome://extensions" title="Click to copy or open in new tab"><code>chrome://extensions</code><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>, turn on <strong>Developer mode</strong> in the top right corner, click <strong>Load unpacked</strong>, and select the <code class="copyable-inline" role="button" tabindex="0" data-copy=".output/chrome-mv3" title="Click to copy">.output/chrome-mv3</code> folder.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Tab 2: Firefox -->
+          <div id="tab-firefox" class="tab-panel" role="tabpanel">
+            <ul class="install-steps">
+              <li class="install-step">
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <p><strong>Install dependencies:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm install" aria-label="Click to copy command">
+                    <code>pnpm install</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <p><strong>Build the Firefox bundle:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm build:firefox" aria-label="Click to copy command">
+                    <code>pnpm build:firefox</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">3</span>
+                <div class="step-text">
+                  <p><strong>Open Firefox Debugging:</strong></p>
+                  <p>Go to <a href="about:debugging#/runtime/this-firefox" target="_blank" rel="noopener noreferrer" class="copyable-inline-link" data-copy="about:debugging#/runtime/this-firefox" title="Click to copy or open in new tab"><code>about:debugging#/runtime/this-firefox</code><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a> in your address bar.</p>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">4</span>
+                <div class="step-text">
+                  <p><strong>Load Add-on:</strong></p>
+                  <p>Click <strong>Load Temporary Add-on...</strong> and select <code class="copyable-inline" role="button" tabindex="0" data-copy=".output/firefox-mv2/manifest.json" title="Click to copy">.output/firefox-mv2/manifest.json</code>.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Tab 3: Build from Source -->
+          <div id="tab-source" class="tab-panel" role="tabpanel">
+            <ul class="install-steps">
+              <li class="install-step">
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <p><strong>Install dependencies:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm install" aria-label="Click to copy command">
+                    <code>pnpm install</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <p><strong>Run live development mode:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm dev" aria-label="Click to copy command">
+                    <code>pnpm dev</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+              <li class="install-step">
+                <span class="step-num">3</span>
+                <div class="step-text">
+                  <p><strong>Run tests:</strong></p>
+                  <div class="copyable-command" role="button" tabindex="0" data-copy="pnpm test" aria-label="Click to copy command">
+                    <code>pnpm test</code>
+                    <span class="copy-action-pill">
+                      <svg class="icon-copy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg class="icon-check" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span class="copy-text">Copy</span>
+                    </span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Call-to-Action -->
+    <section class="section" style="border-bottom: none;">
+      <div class="container">
+        <div class="cta-banner">
+          <h2>Stop retyping the same form data.</h2>
+          <p>Get Form Secretary today. Fast, reliable, and completely private.</p>
+          <div class="cta-banner-buttons">
+            <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="cta-github-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span>View on GitHub</span>
+            </a>
+            <a href="#installation" class="btn btn-secondary" id="cta-install-btn">Get Extension (Free)</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-compact">
+      <div class="footer-left">
+        <a href="#" class="brand">
+          <img src="assets/icon32.png" alt="Form Secretary Logo" width="24" height="24" style="border-radius: 6px;">
+          <span>Form Secretary</span>
+        </a>
+        <span class="footer-copy">&copy; 2026 Form Secretary. MIT License.</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/ayaan-qadri/form-secretary" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/ayaan-qadri/form-secretary/issues" target="_blank" rel="noopener noreferrer">Issues</a>
+        <a href="https://github.com/ayaan-qadri/form-secretary/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+        <a href="https://github.com/ayaan-qadri" target="_blank" rel="noopener noreferrer">Author</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
