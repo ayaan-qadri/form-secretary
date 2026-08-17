@@ -191,7 +191,7 @@ Contributions are warmly welcome! Whether fixing a bug, adding heuristic pattern
 - **100% Local Storage**: All fields, categories, and settings are saved in your browser's local `chrome.storage.local`.
 - **Zero Tracking**: Form Secretary does not collect analytics, logs, telemetry, or network requests.
 - **ReDoS Protected**: Regex input patterns are validated with safety limits to avoid catastrophic backtracking.
-- For more details, see our [Security Policy](SECURITY.md).
+- For complete details, see our [Privacy Policy](PRIVACY.md) and [Security Policy](SECURITY.md).
 
 ---
 

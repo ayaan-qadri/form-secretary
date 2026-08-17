@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>Privacy Policy - Form Secretary</title>
+  <meta name="title" content="Privacy Policy - Form Secretary">
+  <meta name="description" content="Form Secretary operates 100% locally in your browser. Read our transparent, zero-telemetry privacy policy.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://ayaan-qadri.github.io/form-secretary/privacy.html">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icon32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icon16.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="assets/icon128.png">
+
+  <!-- Fonts & Stylesheet -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .privacy-container {
+      max-width: 800px;
+      margin: 40px auto 80px auto;
+      padding: 0 24px;
+    }
+    .privacy-card {
+      background: #ffffff;
+      border: 1px solid var(--border-color, #e5e7eb);
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .privacy-card h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .privacy-meta {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .privacy-card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+    .privacy-card p, .privacy-card li {
+      color: #4b5563;
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+    .privacy-card ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+    .privacy-card li {
+      margin-bottom: 8px;
+    }
+    .privacy-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    .privacy-table th, .privacy-table td {
+      border: 1px solid #e5e7eb;
+      padding: 10px 14px;
+      text-align: left;
+    }
+    .privacy-table th {
+      background-color: #f9fafb;
+      font-weight: 600;
+      color: #111827;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #2563eb;
+      font-weight: 500;
+      text-decoration: none;
+      margin-bottom: 24px;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container navbar-container">
+      <a href="index.html" class="brand" aria-label="Form Secretary Home">
+        <img src="assets/icon32.png" alt="Form Secretary Logo" class="brand-icon" width="32" height="32">
+        <span>Form Secretary</span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer">
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="privacy-container">
+    <a href="index.html" class="back-link">
+      &larr; Back to Home
+    </a>
+
+    <article class="privacy-card">
+      <h1>Privacy Policy</h1>
+      <div class="privacy-meta">Last Updated: August 17, 2026</div>
+
+      <p>Form Secretary ("the Extension", "we", "us", or "our") is dedicated to protecting your privacy. This Privacy Policy explains our zero-telemetry, client-side data handling architecture.</p>
+
+      <h2>1. Zero Remote Data Collection</h2>
+      <p>Form Secretary operates strictly locally on your computer:</p>
+      <ul>
+        <li><strong>No Remote Servers:</strong> We do not operate remote databases, telemetry servers, or cloud synchronization endpoints.</li>
+        <li><strong>No Personal Data Collection:</strong> We do not capture, transmit, monitor, or sell your personal details, credentials, or form input values.</li>
+        <li><strong>No Browsing Tracking:</strong> We do not log, track, or monitor the websites or web pages you visit.</li>
+        <li><strong>No Analytics SDKs:</strong> There are zero third-party tracking scripts, analytics libraries, or advertising identifiers in this extension.</li>
+      </ul>
+
+      <h2>2. Local Data Storage</h2>
+      <p>All data created by you remains completely on your device:</p>
+      <ul>
+        <li><strong>Stored Information:</strong> Your saved custom field values, matching heuristics, tags/categories, and UI settings.</li>
+        <li><strong>Storage Mechanism:</strong> Saved using Chrome's sandboxed local storage (<code>chrome.storage.local</code>).</li>
+        <li><strong>Full User Control:</strong> You can export, import, or wipe your entire vault at any time directly through the extension options.</li>
+      </ul>
+
+      <h2>3. Permissions & Justification</h2>
+      <table class="privacy-table">
+        <thead>
+          <tr>
+            <th>Permission</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>storage</code></td>
+            <td>Persists your custom form fields and settings locally on your machine.</td>
+          </tr>
+          <tr>
+            <td><code>activeTab</code> / <code>scripting</code></td>
+            <td>Detects form elements and injects the autofill helper UI into the active webpage upon user interaction.</td>
+          </tr>
+          <tr>
+            <td><code>tabs</code></td>
+            <td>Communicates between the extension popup and active webpage tabs, and opens settings/help tabs.</td>
+          </tr>
+          <tr>
+            <td><code>clipboardWrite</code></td>
+            <td>Enables user-initiated copying of saved values to the clipboard via the "Copy" button.</td>
+          </tr>
+          <tr>
+            <td><code>&lt;all_urls&gt;</code></td>
+            <td>Allows inspecting and autofilling forms across different websites you visit.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>4. Contact</h2>
+      <p>If you have any questions regarding this Privacy Policy, you can reach out via GitHub:</p>
+      <p><a href="https://github.com/ayaan-qadri/form-secretary/issues" target="_blank" rel="noopener noreferrer" style="color: #2563eb;">https://github.com/ayaan-qadri/form-secretary/issues</a></p>
+    </article>
+  </main>
+
+</body>
+</html>
