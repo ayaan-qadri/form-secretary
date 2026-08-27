@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.2">
 
   <!-- JSON-LD Structured Data for Google Indexing -->
   <script type="application/ld+json">
@@ -56,6 +56,10 @@
         },
         "description": "A smart browser extension to store your information and 1-click autofill web forms and job applications.",
         "url": "https://ayaan-qadri.github.io/form-secretary/",
+        "downloadUrl": [
+          "https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm",
+          "https://addons.mozilla.org/en-US/firefox/addon/form-secretary/"
+        ],
         "author": {
           "@type": "Person",
           "name": "Ayaan Qadri"
@@ -108,8 +112,8 @@
       <div class="container hero-grid">
         <div class="hero-content">
           <div class="badge badge-success">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Free & Open Source</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Now Live on Chrome &amp; Firefox</span>
           </div>
 
           <h1 id="hero-title">Autofill any form with one click. Even the ones regular autofill ignores.</h1>
@@ -119,13 +123,17 @@
           </p>
 
           <div class="hero-cta-group">
-            <a href="#installation" class="btn btn-primary" id="hero-install-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Get the Extension (Free)</span>
+            <a href="https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="hero-chrome-btn">
+              <img src="assets/chrome.svg" alt="Google Chrome" width="19" height="19" class="btn-icon">
+              <span>Add to Chrome (Free)</span>
+            </a>
+            <a href="https://addons.mozilla.org/en-US/firefox/addon/form-secretary/" class="btn btn-firefox" target="_blank" rel="noopener noreferrer" id="hero-firefox-btn">
+              <img src="assets/firefox.svg" alt="Mozilla Firefox" width="19" height="19" class="btn-icon">
+              <span>Add to Firefox (Free)</span>
             </a>
             <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" id="hero-github-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              <span>View on GitHub</span>
+              <span>GitHub</span>
             </a>
           </div>
         </div>
@@ -292,15 +300,76 @@
     <section id="installation" class="section" aria-labelledby="install-title">
       <div class="container">
         <div class="section-header">
-          <div class="badge">Installation</div>
-          <h2 id="install-title">Get started in under two minutes.</h2>
-          <p>Follow these quick instructions to install Form Secretary in your browser.</p>
+          <div class="badge badge-success">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Instant 1-Click Install</span>
+          </div>
+          <h2 id="install-title">Get started in under 30 seconds.</h2>
+          <p>Form Secretary is officially live on browser stores. Choose your browser to install with 1 click.</p>
+        </div>
+
+        <!-- 1-Click Store Cards -->
+        <div class="store-cards-grid">
+          <!-- Chrome Card -->
+          <div class="store-card">
+            <div class="store-card-header">
+              <div class="store-icon-box">
+                <img src="assets/chrome.svg" alt="Google Chrome" width="34" height="34">
+              </div>
+              <div class="store-card-title-group">
+                <h3>Google Chrome</h3>
+                <span class="badge badge-success">Chrome Web Store</span>
+              </div>
+            </div>
+            <div class="store-card-tags">
+              <span class="store-tag">Chrome</span>
+              <span class="store-tag">Brave</span>
+              <span class="store-tag">Edge</span>
+              <span class="store-tag">Arc</span>
+              <span class="store-tag">Opera</span>
+            </div>
+            <p>Official release for all Chromium browsers. Seamless 1-click install and automatic silent updates via Chrome Web Store.</p>
+            <a href="https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="install-chrome-card-btn">
+              <img src="assets/chrome.svg" alt="Google Chrome" width="19" height="19" class="btn-icon">
+              <span>Add to Chrome (Free)</span>
+            </a>
+          </div>
+
+          <!-- Firefox Card -->
+          <div class="store-card">
+            <div class="store-card-header">
+              <div class="store-icon-box">
+                <img src="assets/firefox.svg" alt="Mozilla Firefox" width="34" height="34">
+              </div>
+              <div class="store-card-title-group">
+                <h3>Mozilla Firefox</h3>
+                <span class="badge badge-success">Firefox Add-ons</span>
+              </div>
+            </div>
+            <div class="store-card-tags">
+              <span class="store-tag">Firefox</span>
+              <span class="store-tag">Zen</span>
+              <span class="store-tag">Floorp</span>
+              <span class="store-tag">LibreWolf</span>
+            </div>
+            <p>Official signed add-on from Mozilla Add-ons (AMO). Fully reviewed, client-side only, and 100% private.</p>
+            <a href="https://addons.mozilla.org/en-US/firefox/addon/form-secretary/" class="btn btn-firefox" target="_blank" rel="noopener noreferrer" id="install-firefox-card-btn">
+              <img src="assets/firefox.svg" alt="Mozilla Firefox" width="19" height="19" class="btn-icon">
+              <span>Add to Firefox (Free)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Source Build Divider -->
+        <div class="dev-section-divider">
+          <h3>Build &amp; Run from Source</h3>
+          <p>Looking to contribute, test local branches, or inspect the source code?</p>
         </div>
 
         <div class="install-card">
           <div class="tabs-nav" role="tablist">
-            <button class="tab-btn active" data-tab="chromium" role="tab" aria-selected="true" aria-controls="tab-chromium">Chrome / Brave / Edge</button>
-            <button class="tab-btn" data-tab="firefox" role="tab" aria-selected="false" aria-controls="tab-firefox">Mozilla Firefox</button>
+            <button class="tab-btn active" data-tab="chromium" role="tab" aria-selected="true" aria-controls="tab-chromium">Chrome / Chromium</button>
+            <button class="tab-btn" data-tab="firefox" role="tab" aria-selected="false" aria-controls="tab-firefox">Firefox</button>
             <button class="tab-btn" data-tab="source" role="tab" aria-selected="false" aria-controls="tab-source">Build from Source</button>
           </div>
 
@@ -463,13 +532,20 @@
       <div class="container">
         <div class="cta-banner">
           <h2>Stop retyping the same form data.</h2>
-          <p>Get Form Secretary today. Fast, reliable, and completely private.</p>
+          <p>Get Form Secretary today. Fast, reliable, and 100% private in your browser.</p>
           <div class="cta-banner-buttons">
-            <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="cta-github-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-              <span>View on GitHub</span>
+            <a href="https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm" class="btn btn-primary" target="_blank" rel="noopener noreferrer" id="cta-chrome-btn">
+              <img src="assets/chrome.svg" alt="Google Chrome" width="19" height="19" class="btn-icon">
+              <span>Add to Chrome (Free)</span>
             </a>
-            <a href="#installation" class="btn btn-secondary" id="cta-install-btn">Get Extension (Free)</a>
+            <a href="https://addons.mozilla.org/en-US/firefox/addon/form-secretary/" class="btn btn-firefox" target="_blank" rel="noopener noreferrer" id="cta-firefox-btn">
+              <img src="assets/firefox.svg" alt="Mozilla Firefox" width="19" height="19" class="btn-icon">
+              <span>Add to Firefox (Free)</span>
+            </a>
+            <a href="https://github.com/ayaan-qadri/form-secretary" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" id="cta-github-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span>GitHub</span>
+            </a>
           </div>
         </div>
       </div>
@@ -488,6 +564,8 @@
       </div>
 
       <div class="footer-links">
+        <a href="https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm" target="_blank" rel="noopener noreferrer">Chrome Web Store</a>
+        <a href="https://addons.mozilla.org/en-US/firefox/addon/form-secretary/" target="_blank" rel="noopener noreferrer">Firefox Add-ons</a>
         <a href="https://github.com/ayaan-qadri/form-secretary" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="privacy.html">Privacy Policy</a>
         <a href="https://github.com/ayaan-qadri/form-secretary/issues" target="_blank" rel="noopener noreferrer">Issues</a>

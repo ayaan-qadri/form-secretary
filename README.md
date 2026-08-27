@@ -4,12 +4,20 @@
   <strong style="font-size: 2em;">Form Secretary</strong>
   <br/>
   <p>A smart, framework-resilient browser extension to store, manage, and 1-click autofill your custom form fields</p>
+
+  <p>
+    <a href="https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm"><img src="https://img.shields.io/badge/Chrome_Web_Store-Form_Secretary-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store"/></a>
+    <a href="https://addons.mozilla.org/en-US/firefox/addon/form-secretary/"><img src="https://img.shields.io/badge/Firefox_Add--ons-Form_Secretary-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white" alt="Firefox Add-ons"/></a>
+    <a href="https://ayaan-qadri.github.io/form-secretary/"><img src="https://img.shields.io/badge/Website-Live_Site-2563EB?style=for-the-badge&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48bGluZSB4MT0iMiIgeTE9IjEyIiB4Mj0iMjIiIHkyPSIxMiIvPjxwYXRoIGQ9Ik0xMiAyYTE1LjMgMTUuMyAwIDAgMSA0IDEwIDE1LjMgMTUuMyAwIDAgMS00IDEwIDE1LjMgMTUuMyAwIDAgMS00LTEwIDE1LjMgMTUuMyAwIDAgMSA0LTEweiIvPjwvc3ZnPg==" alt="Official Website"/></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge" alt="MIT License"/></a>
+  </p>
 </div>
 
 ---
 
 ## Table of Contents
 
+- [Install](#install)
 - [What is Form Secretary?](#what-is-form-secretary)
 - [Features](#features)
 - [How It Works & Framework Resilience](#how-it-works--framework-resilience)
@@ -21,6 +29,17 @@
 - [Contributing](#contributing)
 - [Security & Privacy](#security--privacy)
 - [License](#license)
+
+---
+
+## Install
+
+Form Secretary is officially available on the Chrome Web Store and Firefox Add-ons:
+
+| Browser / Store | Supported Browsers | One-Click Install |
+| :--- | :--- | :---: |
+| **Chrome Web Store** | Google Chrome, Brave, Microsoft Edge, Arc, Opera, Vivaldi | [**Add to Chrome**](https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm) |
+| **Firefox Add-ons (AMO)** | Mozilla Firefox, Zen Browser, Floorp, LibreWolf | [**Add to Firefox**](https://addons.mozilla.org/en-US/firefox/addon/form-secretary/) |
 
 ---
 
@@ -100,13 +119,13 @@ Form Secretary is built with modern web extension tooling:
 
 Form Secretary is built on Manifest V3 and WebExtension standards:
 
-| Browser | Status | Engine |
-| :--- | :---: | :--- |
-| **Google Chrome** | Supported | Chromium (MV3) |
-| **Brave** | Supported | Chromium (MV3) |
-| **Microsoft Edge** | Supported | Chromium (MV3) |
-| **Opera / Vivaldi / Arc** | Supported | Chromium (MV3) |
-| **Mozilla Firefox** | Supported | Gecko (MV2/MV3) |
+| Browser | Status | Store / Install Link | Engine |
+| :--- | :---: | :---: | :--- |
+| **Google Chrome** | **Live** | [**Chrome Web Store**](https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm) | Chromium (MV3) |
+| **Brave** | Supported | [**Chrome Web Store**](https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm) | Chromium (MV3) |
+| **Microsoft Edge** | Supported | [**Chrome Web Store**](https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm) | Chromium (MV3) |
+| **Opera / Vivaldi / Arc** | Supported | [**Chrome Web Store**](https://chromewebstore.google.com/detail/form-secretary-smart-auto/eplgjnlnamohicplmomfjeibekfdjebm) | Chromium (MV3) |
+| **Mozilla Firefox** | **Live** | [**Firefox Add-ons (AMO)**](https://addons.mozilla.org/en-US/firefox/addon/form-secretary/) | Gecko (MV2/MV3) |
 
 ---
 

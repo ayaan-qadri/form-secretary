@@ -259,6 +259,35 @@ img {
   transform: translateY(0);
 }
 
+.btn-firefox,
+a.btn.btn-firefox {
+  background: linear-gradient(135deg, #ff6b2b 0%, #ea580c 100%) !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm), 0 4px 14px rgba(234, 88, 12, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.btn-firefox:hover,
+a.btn.btn-firefox:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-firefox:active,
+a.btn.btn-firefox:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .btn-sm {
   padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
@@ -704,6 +733,128 @@ img {
   font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.55;
+}
+
+/* Store Download Cards Section */
+.store-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem;
+  max-width: 860px;
+  margin: 0 auto 3rem auto;
+}
+
+.store-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.store-card:hover {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.store-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+  width: 100%;
+}
+
+.store-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  padding: 8px;
+}
+
+.store-icon-box img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+
+.store-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.store-card-title-group h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.store-card-title-group .badge {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+}
+
+.store-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.store-tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+.store-card p {
+  font-size: 0.925rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.store-card .btn {
+  width: 100%;
+}
+
+.dev-section-divider {
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.dev-section-divider h3 {
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.dev-section-divider p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
 /* Installation Tabs Section */
@@ -1205,10 +1356,15 @@ img {
   /* Grid Reductions to Single Column */
   .features-grid,
   .usecase-grid,
-  .showcase-grid {
+  .showcase-grid,
+  .store-cards-grid {
     grid-template-columns: 1fr;
     max-width: 480px;
     margin: 0 auto;
+  }
+
+  .store-cards-grid {
+    margin-bottom: 2.5rem;
   }
 
   .showcase-img-box {
