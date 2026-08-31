@@ -442,7 +442,244 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    // Save All Detected Fields with Default Options
+    interface ConflictFieldItem {
+      id: string;
+      label: string;
+      category: string;
+      pattern: string;
+      savedValue: string;
+      newValue: string;
+      currentValue: string;
+      action: "override" | "keep" | "remove";
+    }
+
+    let activeConflicts: ConflictFieldItem[] = [];
+    let onConflictApply:
+      | ((resolved: ConflictFieldItem[]) => Promise<void>)
+      | null = null;
+
+    const conflictModal = document.getElementById("conflict-modal");
+    const conflictList = document.getElementById("conflict-fields-list");
+    const conflictSubtitle = document.getElementById("conflict-modal-subtitle");
+    const btnConflictClose = document.getElementById(
+      "btn-conflict-modal-close",
+    );
+    const btnConflictCancel = document.getElementById(
+      "btn-conflict-modal-cancel",
+    );
+    const btnConflictApply = document.getElementById(
+      "btn-conflict-modal-apply",
+    );
+    const btnConflictOverrideAll = document.getElementById(
+      "btn-conflict-override-all",
+    );
+    const btnConflictKeepAll = document.getElementById(
+      "btn-conflict-keep-all",
+    );
+
+    const closeConflictModal = () => {
+      if (conflictModal) conflictModal.style.display = "none";
+      if (conflictList) conflictList.replaceChildren();
+      activeConflicts = [];
+      onConflictApply = null;
+    };
+
+    const renderConflictCards = () => {
+      if (!conflictList) return;
+      conflictList.replaceChildren();
+
+      activeConflicts.forEach((item) => {
+        const card = document.createElement("div");
+        card.className =
+          "fs-conflict-card bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col gap-2 transition-all";
+        card.dataset.id = item.id;
+
+        if (item.action === "remove") {
+          card.classList.add("opacity-50", "bg-slate-50");
+        }
+
+        // Row 1: Label + Category on Left, Mini Segmented Control on Right
+        const topRow = document.createElement("div");
+        topRow.className = "flex items-center justify-between gap-1.5 min-w-0";
+
+        const left = document.createElement("div");
+        left.className = "flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden";
+
+        const title = document.createElement("span");
+        title.className = "text-xs font-bold text-slate-900 truncate min-w-0 flex-1";
+        title.title = item.label;
+        title.textContent = item.label;
+        left.appendChild(title);
+
+        const catBadge = document.createElement("span");
+        catBadge.className =
+          "text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0 max-w-[80px] truncate";
+        catBadge.textContent = item.category;
+        catBadge.title = item.category;
+        left.appendChild(catBadge);
+
+        topRow.appendChild(left);
+
+        // Segmented Control: [ Override | Keep | Skip ]
+        const actionsBar = document.createElement("div");
+        actionsBar.className =
+          "flex items-center bg-slate-100 p-0.5 rounded-lg shrink-0 gap-0.5 border border-slate-200/60";
+
+        const btnOverride = document.createElement("button");
+        btnOverride.type = "button";
+        btnOverride.className = `fs-conflict-btn-override px-2 py-0.5 text-[10px] font-semibold rounded-md transition-all border-none cursor-pointer ${
+          item.action === "override"
+            ? "bg-blue-600 text-white shadow-2xs"
+            : "bg-transparent text-slate-600 hover:text-slate-900"
+        }`;
+        btnOverride.textContent = "Override";
+        btnOverride.addEventListener("click", () => {
+          item.action = "override";
+          renderConflictCards();
+        });
+
+        const btnKeep = document.createElement("button");
+        btnKeep.type = "button";
+        btnKeep.className = `fs-conflict-btn-keep px-2 py-0.5 text-[10px] font-semibold rounded-md transition-all border-none cursor-pointer ${
+          item.action === "keep"
+            ? "bg-slate-700 text-white shadow-2xs"
+            : "bg-transparent text-slate-600 hover:text-slate-900"
+        }`;
+        btnKeep.textContent = "Keep";
+        btnKeep.addEventListener("click", () => {
+          item.action = "keep";
+          renderConflictCards();
+        });
+
+        const btnSkip = document.createElement("button");
+        btnSkip.type = "button";
+        btnSkip.className = `fs-conflict-btn-skip px-1.5 py-0.5 text-[10px] font-semibold rounded-md transition-all border-none cursor-pointer ${
+          item.action === "remove"
+            ? "bg-rose-600 text-white shadow-2xs"
+            : "bg-transparent text-slate-400 hover:text-rose-600"
+        }`;
+        btnSkip.textContent = "Skip";
+        btnSkip.title = "Skip / Remove from saving";
+        btnSkip.addEventListener("click", () => {
+          item.action = item.action === "remove" ? "override" : "remove";
+          renderConflictCards();
+        });
+
+        actionsBar.appendChild(btnOverride);
+        actionsBar.appendChild(btnKeep);
+        actionsBar.appendChild(btnSkip);
+        topRow.appendChild(actionsBar);
+
+        // Row 2: Saved Value (full width pill at top)
+        const savedBox = document.createElement("div");
+        savedBox.className =
+          "flex items-center gap-1.5 px-2 py-1 bg-slate-50 border border-slate-200/80 rounded-lg min-w-0 w-full overflow-hidden";
+        savedBox.title = item.savedValue;
+        const savedTag = document.createElement("span");
+        savedTag.className =
+          "text-[9px] font-bold text-slate-400 uppercase shrink-0";
+        savedTag.textContent = "Saved:";
+        const savedVal = document.createElement("span");
+        savedVal.className =
+          "text-[11px] text-slate-600 truncate flex-1 min-w-0 font-mono select-all";
+        savedVal.textContent = item.savedValue;
+        savedVal.title = item.savedValue;
+        savedBox.appendChild(savedTag);
+        savedBox.appendChild(savedVal);
+
+        // Row 3: New / Editable Value Input (full width below saved)
+        const editBox = document.createElement("div");
+        editBox.className = "relative flex items-center min-w-0 w-full";
+        const editInput = document.createElement("input");
+        editInput.type = "text";
+        editInput.className =
+          "fs-conflict-input w-full min-w-0 h-7 px-2.5 text-xs bg-white border border-blue-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 font-mono transition-all placeholder-slate-400";
+        editInput.value = item.currentValue;
+        editInput.placeholder = "New value...";
+        editInput.dataset.id = item.id;
+        editInput.title = item.currentValue;
+        editInput.disabled = item.action === "remove";
+        editInput.addEventListener("input", () => {
+          item.currentValue = editInput.value;
+          editInput.title = editInput.value;
+        });
+        editBox.appendChild(editInput);
+
+        card.appendChild(topRow);
+        card.appendChild(savedBox);
+        card.appendChild(editBox);
+
+        conflictList.appendChild(card);
+      });
+    };
+
+    const openConflictModal = (
+      conflicts: ConflictFieldItem[],
+      onApply: (resolved: ConflictFieldItem[]) => Promise<void>,
+    ): void => {
+      activeConflicts = [...conflicts];
+      onConflictApply = onApply;
+
+      if (conflictSubtitle) {
+        conflictSubtitle.textContent = `Review ${activeConflicts.length} field${activeConflicts.length === 1 ? "" : "s"} with differing values`;
+      }
+
+      renderConflictCards();
+      if (conflictModal) conflictModal.style.display = "flex";
+    };
+
+    // Conflict Modal Event Listeners
+    if (btnConflictOverrideAll) {
+      btnConflictOverrideAll.addEventListener("click", () => {
+        activeConflicts.forEach((c) => (c.action = "override"));
+        renderConflictCards();
+      });
+    }
+
+    if (btnConflictKeepAll) {
+      btnConflictKeepAll.addEventListener("click", () => {
+        activeConflicts.forEach((c) => (c.action = "keep"));
+        renderConflictCards();
+      });
+    }
+
+    if (btnConflictClose) {
+      btnConflictClose.addEventListener("click", closeConflictModal);
+    }
+
+    if (btnConflictCancel) {
+      btnConflictCancel.addEventListener("click", closeConflictModal);
+    }
+
+    if (btnConflictApply) {
+      btnConflictApply.addEventListener("click", async () => {
+        const applyCb = onConflictApply;
+        const resolved = [...activeConflicts];
+        closeConflictModal();
+        if (applyCb) {
+          await applyCb(resolved);
+        }
+      });
+    }
+
+    if (conflictModal) {
+      conflictModal.addEventListener("mousedown", (e) => {
+        if (e.target === conflictModal) {
+          closeConflictModal();
+        }
+      });
+    }
+
+    // Modal close on Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (conflictModal && conflictModal.style.display !== "none") {
+          closeConflictModal();
+        }
+      }
+    });
+
+    // Save All Detected Fields with Default Options & Conflict Resolution
     if (btnSaveAllFields) {
       btnSaveAllFields.addEventListener("click", async () => {
         if (!activeTabFields || activeTabFields.length === 0) {
@@ -451,7 +688,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const defaultCategory = allCategories[0] || "General";
-        let savedCount = 0;
+        const fieldsToProcess: {
+          field: DetectedPageField;
+          val: string;
+          displayName: string;
+          pattern: string;
+          existing: FormSecretaryField | undefined;
+        }[] = [];
 
         for (const field of activeTabFields) {
           const inputEl = pageFieldsContainer?.querySelector(
@@ -478,70 +721,168 @@ document.addEventListener("DOMContentLoaded", async () => {
               .filter(Boolean)
               .join(", ") || displayName;
 
-          const existing = allFields.find(
-            (f) => f.label.toLowerCase() === displayName.toLowerCase(),
-          );
+          const existing =
+            (field.topMatch?.fieldId
+              ? allFields.find((f) => f.id === field.topMatch?.fieldId)
+              : null) ||
+            allFields.find(
+              (f) => f.label.toLowerCase() === displayName.toLowerCase(),
+            );
 
-          if (existing) {
-            await saveField({
-              id: existing.id,
-              label: existing.label,
-              value: val,
-              category: existing.category || defaultCategory,
-              pattern: existing.pattern || pattern,
-            });
-          } else {
-            await saveField({
-              label: displayName,
-              value: val,
-              category: defaultCategory,
-              pattern,
-              matchType: "smart",
-              targetProperty: "all",
-              enabled: true,
-            });
-          }
-          savedCount++;
+          fieldsToProcess.push({
+            field,
+            val,
+            displayName,
+            pattern,
+            existing,
+          });
         }
 
-        if (savedCount === 0) {
+        if (fieldsToProcess.length === 0) {
           showToast("Please enter values in the fields to save");
           return;
         }
 
-        await loadData();
-        notifyActiveTab({ action: "REFRESH_FIELDS" });
+        const nonConflicting: {
+          id?: string;
+          label: string;
+          value: string;
+          category: string;
+          pattern: string;
+          matchType?: any;
+          targetProperty?: any;
+          enabled?: boolean;
+        }[] = [];
 
-        btnSaveAllFields.classList.add("fs-fill-success");
-        const checkIcon = createIconElement("check", {
-          size: 12,
-          strokeWidth: 2.5,
-        });
-        const spanText = document.createElement("span");
-        spanText.textContent = `Saved ${savedCount} Field${savedCount === 1 ? "" : "s"}!`;
-        btnSaveAllFields.replaceChildren(
-          checkIcon || document.createTextNode(""),
-          spanText,
-        );
+        const conflicts: ConflictFieldItem[] = [];
 
-        setTimeout(() => {
-          btnSaveAllFields.classList.remove("fs-fill-success");
-          const plusIcon = createIconElement("plus", {
-            size: 13,
+        for (const item of fieldsToProcess) {
+          const { val, displayName, pattern, existing } = item;
+
+          if (!existing) {
+            const prev = nonConflicting.find(
+              (nc) => nc.label.toLowerCase() === displayName.toLowerCase(),
+            );
+            if (prev) {
+              prev.value = val;
+              prev.pattern = prev.pattern || pattern;
+            } else {
+              nonConflicting.push({
+                label: displayName,
+                value: val,
+                category: defaultCategory,
+                pattern,
+                matchType: "smart",
+                targetProperty: "all",
+                enabled: true,
+              });
+            }
+          } else {
+            if (existing.value.trim() === val) {
+              nonConflicting.push({
+                id: existing.id,
+                label: existing.label,
+                value: val,
+                category: existing.category || defaultCategory,
+                pattern: existing.pattern || pattern,
+              });
+            } else {
+              const alreadyConflict = conflicts.find(
+                (c) => c.id === existing.id,
+              );
+              if (alreadyConflict) {
+                alreadyConflict.newValue = val;
+                alreadyConflict.currentValue = val;
+              } else {
+                conflicts.push({
+                  id: existing.id,
+                  label: existing.label,
+                  category: existing.category || defaultCategory,
+                  pattern: existing.pattern || pattern,
+                  savedValue: existing.value,
+                  newValue: val,
+                  currentValue: val,
+                  action: "override",
+                });
+              }
+            }
+          }
+        }
+
+        // Save non-conflicting fields
+        let savedCount = 0;
+        for (const nc of nonConflicting) {
+          const savedItem = await saveField(nc as any);
+          if (nc.id) {
+            const idx = allFields.findIndex((f) => f.id === nc.id);
+            if (idx !== -1) allFields[idx] = savedItem;
+            else allFields.push(savedItem);
+          } else {
+            allFields.push(savedItem);
+          }
+          savedCount++;
+        }
+
+        const handleSuccessState = async (totalCount: number) => {
+          await loadData();
+          notifyActiveTab({ action: "REFRESH_FIELDS" });
+
+          btnSaveAllFields.classList.add("fs-fill-success");
+          const checkIcon = createIconElement("check", {
+            size: 12,
             strokeWidth: 2.5,
           });
-          const defaultSpan = document.createElement("span");
-          defaultSpan.textContent = "Save All Fields";
+          const spanText = document.createElement("span");
+          spanText.textContent = `Saved ${totalCount} Field${totalCount === 1 ? "" : "s"}!`;
           btnSaveAllFields.replaceChildren(
-            plusIcon || document.createTextNode(""),
-            defaultSpan,
+            checkIcon || document.createTextNode(""),
+            spanText,
           );
-        }, 1500);
 
-        showToast(
-          `Saved ${savedCount} field${savedCount === 1 ? "" : "s"} to My Fields!`,
-        );
-        setTimeout(scanActiveTab, 400);
+          setTimeout(() => {
+            btnSaveAllFields.classList.remove("fs-fill-success");
+            const plusIcon = createIconElement("plus", {
+              size: 13,
+              strokeWidth: 2.5,
+            });
+            const defaultSpan = document.createElement("span");
+            defaultSpan.textContent = "Save All Fields";
+            btnSaveAllFields.replaceChildren(
+              plusIcon || document.createTextNode(""),
+              defaultSpan,
+            );
+          }, 1500);
+
+          showToast(
+            `Saved ${totalCount} field${totalCount === 1 ? "" : "s"} to My Fields!`,
+          );
+          setTimeout(scanActiveTab, 400);
+        };
+
+        if (conflicts.length === 0) {
+          await handleSuccessState(savedCount);
+        } else {
+          openConflictModal(conflicts, async (resolved) => {
+            let conflictSavedCount = 0;
+            for (const item of resolved) {
+              if (item.action === "override") {
+                const finalVal = item.currentValue.trim() || item.savedValue;
+                const savedItem = await saveField({
+                  id: item.id,
+                  label: item.label,
+                  value: finalVal,
+                  category: item.category,
+                  pattern: item.pattern,
+                });
+                const idx = allFields.findIndex((f) => f.id === item.id);
+                if (idx !== -1) allFields[idx] = savedItem;
+                else allFields.push(savedItem);
+                conflictSavedCount++;
+              }
+            }
+            await handleSuccessState(savedCount + conflictSavedCount);
+          });
+        }
       });
     }
 

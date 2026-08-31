@@ -78,6 +78,16 @@ function buildPopupDOM() {
         <input id="form-regex-input" style="display:none;">
       </form>
     </div>
+
+    <div id="conflict-modal" style="display:none;">
+      <span id="conflict-modal-subtitle"></span>
+      <button id="btn-conflict-modal-close"></button>
+      <button id="btn-conflict-override-all"></button>
+      <button id="btn-conflict-keep-all"></button>
+      <div id="conflict-fields-list"></div>
+      <button id="btn-conflict-modal-cancel"></button>
+      <button id="btn-conflict-modal-apply"></button>
+    </div>
   `;
 }
 
@@ -430,6 +440,393 @@ describe("Popup Controller", () => {
       assert.ok(savedFields.some((f) => f.label === "LinkedIn profile" && f.value === "https://www.linkedin.com/in/janedoe"));
       assert.strictEqual(savedFields[0].category, "Personal");
       assert.strictEqual(savedFields[0].matchType, "smart");
+    });
+
+    it("prevents duplicate storage when multiple inputs on page have the same label", async () => {
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "phone_primary",
+                label: "Phone Number",
+                currentValue: "123-456-7890",
+                matchesCount: 0,
+                topMatch: null,
+              },
+              {
+                index: 1,
+                name: "phone_secondary",
+                label: "Phone Number",
+                currentValue: "987-654-3210",
+                matchesCount: 0,
+                topMatch: null,
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      const phoneFields = savedFields.filter((f) => f.label === "Phone Number");
+      assert.strictEqual(phoneFields.length, 1);
+      assert.strictEqual(phoneFields[0].value, "987-654-3210");
+    });
+
+    it("updates existing matched field via topMatch instead of creating duplicate field with page label", async () => {
+      const existingField = await storage.saveField({
+        label: "Primary Email Address",
+        value: "old@example.com",
+        pattern: "email, user_email",
+        category: "Personal",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "user_email",
+                label: "Email *",
+                currentValue: "new@example.com",
+                matchesCount: 1,
+                topMatch: {
+                  fieldId: existingField.id,
+                  label: existingField.label,
+                  value: existingField.value,
+                  score: 95,
+                },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const conflictModal = document.getElementById("conflict-modal");
+      assert.strictEqual(conflictModal.style.display, "flex");
+
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      assert.strictEqual(savedFields.length, 1);
+      assert.strictEqual(savedFields[0].id, existingField.id);
+      assert.strictEqual(savedFields[0].label, "Primary Email Address");
+      assert.strictEqual(savedFields[0].value, "new@example.com");
+    });
+
+    it("opens conflict resolution modal and allows keeping saved value without overriding", async () => {
+      const existingField = await storage.saveField({
+        label: "Job Title",
+        value: "Senior Engineer",
+        category: "Job Apps",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "title",
+                label: "Job Title",
+                currentValue: "Tech Lead",
+                matchesCount: 1,
+                topMatch: {
+                  fieldId: existingField.id,
+                  label: existingField.label,
+                  value: existingField.value,
+                  score: 100,
+                },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const conflictModal = document.getElementById("conflict-modal");
+      assert.strictEqual(conflictModal.style.display, "flex");
+
+      // Click Keep Saved button
+      const btnKeep = document.querySelector(".fs-conflict-btn-keep");
+      assert.ok(btnKeep);
+      btnKeep.click();
+
+      // Click Apply
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      assert.strictEqual(savedFields.length, 1);
+      assert.strictEqual(savedFields[0].value, "Senior Engineer");
+    });
+
+    it("allows editing the new value inside conflict modal before saving", async () => {
+      const existingField = await storage.saveField({
+        label: "Address",
+        value: "123 Main St",
+        category: "Personal",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "street_address",
+                label: "Address",
+                currentValue: "456 Market St",
+                matchesCount: 1,
+                topMatch: {
+                  fieldId: existingField.id,
+                  label: existingField.label,
+                  value: existingField.value,
+                  score: 90,
+                },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      // Modify the conflict input value
+      const editInput = document.querySelector(".fs-conflict-input");
+      assert.ok(editInput);
+      editInput.value = "789 Custom Ave, Suite 100";
+      editInput.dispatchEvent(new MockEvent("input"));
+
+      // Click Apply
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      assert.strictEqual(savedFields.length, 1);
+      assert.strictEqual(savedFields[0].value, "789 Custom Ave, Suite 100");
+    });
+
+    it("allows skipping / removing field from being saved in conflict modal", async () => {
+      const existingField = await storage.saveField({
+        label: "City",
+        value: "San Francisco",
+        category: "Personal",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "city_name",
+                label: "City",
+                currentValue: "Oakland",
+                matchesCount: 1,
+                topMatch: {
+                  fieldId: existingField.id,
+                  label: existingField.label,
+                  value: existingField.value,
+                  score: 90,
+                },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      // Click Skip
+      const btnSkip = document.querySelector(".fs-conflict-btn-skip");
+      assert.ok(btnSkip);
+      btnSkip.click();
+
+      // Click Apply
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      assert.strictEqual(savedFields.length, 1);
+      assert.strictEqual(savedFields[0].value, "San Francisco");
+    });
+
+    it("handles quick actions Override All and Keep All in conflict modal", async () => {
+      const f1 = await storage.saveField({
+        label: "Field 1",
+        value: "Val 1 Old",
+        category: "Personal",
+      });
+      const f2 = await storage.saveField({
+        label: "Field 2",
+        value: "Val 2 Old",
+        category: "Personal",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "f1",
+                label: "Field 1",
+                currentValue: "Val 1 New",
+                matchesCount: 1,
+                topMatch: { fieldId: f1.id, label: f1.label, value: f1.value, score: 90 },
+              },
+              {
+                index: 1,
+                name: "f2",
+                label: "Field 2",
+                currentValue: "Val 2 New",
+                matchesCount: 1,
+                topMatch: { fieldId: f2.id, label: f2.label, value: f2.value, score: 90 },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      // Click Keep All Saved
+      const btnKeepAll = document.getElementById("btn-conflict-keep-all");
+      assert.ok(btnKeepAll);
+      btnKeepAll.click();
+
+      // Click Apply
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      assert.strictEqual(savedFields.find((f) => f.id === f1.id)?.value, "Val 1 Old");
+      assert.strictEqual(savedFields.find((f) => f.id === f2.id)?.value, "Val 2 Old");
+    });
+
+    it("handles ultra-long text in labels and values gracefully without breaking", async () => {
+      const longLabel = "A".repeat(300);
+      const longOldValue = "OldValue_".repeat(100);
+      const longNewValue = "NewValue_".repeat(100);
+
+      const fLong = await storage.saveField({
+        label: longLabel,
+        value: longOldValue,
+        category: "Custom Very Long Category Name That Exceeds Normal Limits",
+      });
+
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "long_field",
+                label: longLabel,
+                currentValue: longNewValue,
+                matchesCount: 1,
+                topMatch: { fieldId: fLong.id, label: fLong.label, value: fLong.value, score: 90 },
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const conflictCard = document.querySelector(".fs-conflict-card");
+      assert.ok(conflictCard);
+
+      const title = conflictCard.querySelector(".truncate");
+      assert.strictEqual(title.textContent, longLabel);
+
+      const editInput = conflictCard.querySelector(".fs-conflict-input");
+      assert.strictEqual(editInput.value, longNewValue);
+
+      const btnApply = document.getElementById("btn-conflict-modal-apply");
+      btnApply.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      const updated = savedFields.find((f) => f.id === fLong.id);
+      assert.strictEqual(updated.value, longNewValue);
     });
 
     it("displays Autofill button always when fields are detected and shows Filled badge for filled inputs", async () => {

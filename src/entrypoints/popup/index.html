@@ -511,6 +511,101 @@
         </form>
       </div>
 
+      <!-- Conflict Resolution Modal -->
+      <div
+        class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 z-50 transition-opacity"
+        id="conflict-modal"
+        style="display: none"
+      >
+        <div
+          class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-h-[500px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+          id="conflict-card"
+        >
+          <!-- Header -->
+          <div
+            class="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-100 shrink-0 bg-slate-50/50"
+          >
+            <div class="flex items-center gap-2">
+              <div
+                class="w-6 h-6 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0"
+              >
+                <i data-lucide="warning" class="w-3.5 h-3.5"></i>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <h2 class="text-xs font-bold text-slate-900 leading-tight">
+                  Field Value Conflicts
+                </h2>
+                <span
+                  class="text-[10px] text-slate-500 truncate"
+                  id="conflict-modal-subtitle"
+                  >Review and resolve differences for existing fields</span
+                >
+              </div>
+            </div>
+            <button
+              type="button"
+              class="w-6 h-6 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-all cursor-pointer border-none bg-transparent"
+              id="btn-conflict-modal-close"
+              title="Close"
+            >
+              <i data-lucide="close" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Quick Action Bar -->
+          <div
+            class="px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-2 shrink-0"
+          >
+            <span class="text-[10px] font-medium text-slate-500">Quick set all:</span>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="btn-conflict-override-all"
+                class="px-2 py-0.5 text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md cursor-pointer transition-colors"
+              >
+                Override All
+              </button>
+              <button
+                type="button"
+                id="btn-conflict-keep-all"
+                class="px-2 py-0.5 text-[10px] font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-md cursor-pointer transition-colors"
+              >
+                Keep All Saved
+              </button>
+            </div>
+          </div>
+
+          <!-- Scrollable Conflict list -->
+          <div
+            class="flex-1 overflow-y-auto p-3 flex flex-col gap-2"
+            id="conflict-fields-list"
+          >
+            <!-- Dynamically rendered conflict cards -->
+          </div>
+
+          <!-- Footer -->
+          <div
+            class="flex items-center justify-between px-3.5 py-2.5 border-t border-slate-100 bg-slate-50/50 shrink-0 gap-2"
+          >
+            <button
+              type="button"
+              id="btn-conflict-modal-cancel"
+              class="px-3 py-1 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="btn-conflict-modal-apply"
+              class="fs-btn-primary px-3 py-1 text-xs font-semibold rounded-lg cursor-pointer border-none flex items-center gap-1.5 shadow-2xs"
+            >
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span id="btn-conflict-apply-text">Save & Apply</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Notification Toast -->
       <div
         class="fixed bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 bg-slate-900/95 backdrop-blur text-white text-xs font-medium rounded-full shadow-lg pointer-events-none z-50 transition-all max-w-[82%] truncate text-center"
