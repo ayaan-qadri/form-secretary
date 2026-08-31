@@ -8,7 +8,6 @@ export default defineConfig({
     name: "Form Secretary - Smart Autofill Assistant",
     description:
       "Smartly detects form fields on any page and autofills your custom values with a single click.",
-    version: "1.0.0",
     permissions: [
       "storage",
       "activeTab",
@@ -47,6 +46,9 @@ export default defineConfig({
         matches: ["<all_urls>"],
       },
     ],
+  },
+  zip: {
+    excludeSources: ["docs/**", ".output/**", ".wxt/**"],
   },
   vite: () => ({
     plugins: [tailwindcss()],

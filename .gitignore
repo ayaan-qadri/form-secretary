@@ -12,8 +12,7 @@ build/
 
 # Environment & Secrets
 .env
-.env.local
-.env.*.local
+.env.*
 *.env
 
 # Logs & Diagnostics

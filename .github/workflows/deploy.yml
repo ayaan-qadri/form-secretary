@@ -1,0 +1,135 @@
+name: Deploy Extension
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Stores to deploy to'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'chrome'
+          - 'firefox'
+        default: 'all'
+      dry_run:
+        description: 'Dry run (verify credentials and build without publishing)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    name: Build, Test & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm compile
+
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Build & Package Chrome Extension (MV3)
+        run: pnpm zip
+
+      - name: Build & Package Firefox Extension (MV2 + Sources)
+        run: pnpm zip:firefox
+
+      - name: Archive Extension Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: form-secretary-packages
+          path: .output/*.zip
+          retention-days: 14
+
+      - name: Submit to Chrome Web Store
+        if: github.event_name == 'release' || inputs.target == 'all' || inputs.target == 'chrome'
+        run: |
+          if [ -z "$CHROME_CLIENT_ID" ] || [ -z "$CHROME_EXTENSION_ID" ] || [ -z "$CHROME_CLIENT_SECRET" ] || [ -z "$CHROME_REFRESH_TOKEN" ]; then
+            echo "::error ::Missing Chrome Web Store credentials. Please configure CHROME_CLIENT_ID, CHROME_EXTENSION_ID, CHROME_CLIENT_SECRET, and CHROME_REFRESH_TOKEN in repository secrets."
+            exit 1
+          fi
+
+          CHROME_ZIP=$(find .output -name "*-chrome.zip" -type f | head -n 1)
+          if [ -z "$CHROME_ZIP" ] || [ ! -f "$CHROME_ZIP" ]; then
+            echo "::error ::Chrome ZIP artifact not found in .output/"
+            exit 1
+          fi
+
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Running in DRY RUN mode for Chrome Web Store..."
+            DRY_RUN_FLAG="--dry-run"
+          fi
+
+          pnpm wxt submit --chrome-zip "$CHROME_ZIP" $DRY_RUN_FLAG
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_PUBLISH_TARGET: ${{ secrets.CHROME_PUBLISH_TARGET || 'default' }}
+
+      - name: Submit to Mozilla Firefox Add-ons (AMO)
+        if: github.event_name == 'release' || inputs.target == 'all' || inputs.target == 'firefox'
+        run: |
+          if [ -z "$FIREFOX_JWT_ISSUER" ] || [ -z "$FIREFOX_JWT_SECRET" ]; then
+            echo "::error ::Missing Mozilla AMO credentials. Please configure FIREFOX_JWT_ISSUER and FIREFOX_JWT_SECRET in repository secrets."
+            exit 1
+          fi
+
+          FIREFOX_ZIP=$(find .output -name "*-firefox.zip" -type f | head -n 1)
+          if [ -z "$FIREFOX_ZIP" ] || [ ! -f "$FIREFOX_ZIP" ]; then
+            echo "::error ::Firefox ZIP artifact not found in .output/"
+            exit 1
+          fi
+
+          SOURCES_ZIP=$(find .output -name "*-sources.zip" -type f 2>/dev/null | head -n 1)
+          SOURCES_FLAG=""
+          if [ -n "$SOURCES_ZIP" ] && [ -f "$SOURCES_ZIP" ]; then
+            SOURCES_FLAG="--firefox-sources-zip $SOURCES_ZIP"
+          fi
+
+          DRY_RUN_FLAG=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Running in DRY RUN mode for Mozilla Firefox Add-ons..."
+            DRY_RUN_FLAG="--dry-run"
+          fi
+
+          pnpm wxt submit --firefox-zip "$FIREFOX_ZIP" $SOURCES_FLAG $DRY_RUN_FLAG
+        env:
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID || 'form-secretary@ayaanqadri.dev' }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          FIREFOX_CHANNEL: ${{ secrets.FIREFOX_CHANNEL || 'listed' }}
+
+      - name: Upload Release Assets
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: .output/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
