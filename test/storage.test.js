@@ -173,10 +173,67 @@ describe("FormSecretaryStorage", () => {
       assert.strictEqual(refreshedTarget.label, "Updated Label");
     });
 
+    it("generates a unique ID even when id is passed as undefined or empty string", async () => {
+      const f1 = await storage.saveField({
+        id: undefined,
+        label: "Field 1",
+        value: "val1",
+      });
+      const f2 = await storage.saveField({
+        id: "",
+        label: "Field 2",
+        value: "val2",
+      });
+
+      assert.ok(typeof f1.id === "string" && f1.id.length > 0);
+      assert.ok(typeof f2.id === "string" && f2.id.length > 0);
+      assert.notStrictEqual(f1.id, f2.id);
+    });
+
+    it("self-heals existing fields in storage missing valid unique IDs", async () => {
+      // Seed directly into storage keys without valid IDs
+      await storage.setItem(storage.getStorageKeys().FIELDS, [
+        { label: "Corrupt Field 1", value: "c1" }, // missing id
+        { id: "", label: "Corrupt Field 2", value: "c2" }, // empty string id
+        { id: "duplicate_id", label: "Dup Field 1", value: "d1" },
+        { id: "duplicate_id", label: "Dup Field 2", value: "d2" }, // duplicate id
+      ]);
+
+      const healedFields = await storage.getFields();
+      assert.strictEqual(healedFields.length, 4);
+
+      const ids = healedFields.map((f) => f.id);
+      const uniqueIds = new Set(ids);
+      assert.strictEqual(uniqueIds.size, 4, "All 4 fields must have unique IDs");
+      ids.forEach((id) => {
+        assert.ok(typeof id === "string" && id.trim().length > 0);
+      });
+    });
+
+    it("safely handles deleteField with invalid or missing ID without deleting fields", async () => {
+      await storage.saveField({ label: "Safe Field 1", value: "sf1" });
+      await storage.saveField({ label: "Safe Field 2", value: "sf2" });
+
+      const initialCount = (await storage.getFields()).length;
+
+      assert.strictEqual(await storage.deleteField(""), false);
+      assert.strictEqual(await storage.deleteField(null), false);
+      assert.strictEqual(await storage.deleteField(undefined), false);
+      assert.strictEqual(await storage.deleteField("non_existent_id"), false);
+
+      const currentCount = (await storage.getFields()).length;
+      assert.strictEqual(currentCount, initialCount, "No fields should have been deleted");
+    });
+
     it("deletes a field by ID", async () => {
       const created = await storage.saveField({
         label: "Field to Delete",
         value: "delete_me",
+        category: "Personal",
+      });
+      const keepField = await storage.saveField({
+        label: "Field to Keep",
+        value: "keep_me",
         category: "Personal",
       });
 
@@ -184,8 +241,10 @@ describe("FormSecretaryStorage", () => {
       assert.strictEqual(result, true);
 
       const refreshedFields = await storage.getFields();
-      const exists = refreshedFields.some((f) => f.id === created.id);
-      assert.strictEqual(exists, false);
+      const existsDeleted = refreshedFields.some((f) => f.id === created.id);
+      const existsKept = refreshedFields.some((f) => f.id === keepField.id);
+      assert.strictEqual(existsDeleted, false);
+      assert.strictEqual(existsKept, true);
     });
 
     it("deletes all fields", async () => {
@@ -293,6 +352,28 @@ describe("FormSecretaryStorage", () => {
       assert.strictEqual(result.fields[0].label, "Tax ID");
       assert.strictEqual(result.settings.showFloatingBar, true);
       assert.strictEqual(result.settings.theme, "dark");
+    });
+
+    it("sanitizes imported fields with missing or duplicate IDs", async () => {
+      const payload = {
+        categories: ["General"],
+        fields: [
+          { label: "No ID 1", value: "v1" },
+          { id: "", label: "Empty ID 2", value: "v2" },
+          { id: "same_id", label: "Dup ID 1", value: "v3" },
+          { id: "same_id", label: "Dup ID 2", value: "v4" },
+        ],
+      };
+
+      const result = await storage.importData(payload);
+      assert.strictEqual(result.fields.length, 4);
+
+      const ids = result.fields.map((f) => f.id);
+      const uniqueIds = new Set(ids);
+      assert.strictEqual(uniqueIds.size, 4, "All imported fields must have unique IDs");
+      ids.forEach((id) => {
+        assert.ok(typeof id === "string" && id.trim().length > 0);
+      });
     });
 
     it("throws error when importing invalid non-object payload", async () => {

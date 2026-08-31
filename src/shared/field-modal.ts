@@ -202,8 +202,9 @@ export class FieldModal {
           finalPattern = labelVal;
         }
 
+        const rawId = this.el.formId?.value?.trim();
         const fieldData: Partial<FormSecretaryField> = {
-          id: this.el.formId ? this.el.formId.value || undefined : undefined,
+          ...(rawId ? { id: rawId } : {}),
           label: labelVal,
           value: this.el.formValue ? this.el.formValue.value : "",
           pattern: finalPattern,

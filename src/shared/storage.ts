@@ -167,6 +167,10 @@ export async function deleteCategory(categoryName: string): Promise<string[]> {
   return categories;
 }
 
+export function generateFieldId(): string {
+  return "field_" + Math.random().toString(36).substring(2, 11) + "_" + Date.now();
+}
+
 // ==========================================
 // Fields Management API
 // ==========================================
@@ -179,7 +183,43 @@ export async function getFields(): Promise<FormSecretaryField[]> {
     await setItem(keys.FIELDS, []);
     return [];
   }
-  return fields;
+
+  // Self-healing migration: Ensure every field has a unique, valid non-empty string ID
+  let needsMigration = false;
+  const seenIds = new Set<string>();
+  const healedFields: FormSecretaryField[] = fields.map((f, idx) => {
+    if (!f || typeof f !== "object") return f;
+    const hasValidId = typeof f.id === "string" && f.id.trim().length > 0;
+    if (!hasValidId || seenIds.has(f.id.trim())) {
+      needsMigration = true;
+      const newId =
+        "field_" +
+        Math.random().toString(36).substring(2, 11) +
+        "_" +
+        (Date.now() + idx);
+      seenIds.add(newId);
+      return {
+        ...f,
+        id: newId,
+        enabled: f.enabled !== false,
+        category: f.category || "Personal",
+        matchType: f.matchType || "smart",
+        targetProperty: f.targetProperty || "all",
+      };
+    }
+    const cleanId = f.id.trim();
+    seenIds.add(cleanId);
+    return {
+      ...f,
+      id: cleanId,
+    };
+  });
+
+  if (needsMigration) {
+    await setItem(keys.FIELDS, healedFields);
+  }
+
+  return healedFields;
 }
 
 export async function saveField(
@@ -196,8 +236,10 @@ export async function saveField(
     await addCategory(field.category);
   }
 
-  if (field.id) {
-    const index = fields.findIndex((f) => f.id === field.id);
+  const rawId = typeof field.id === "string" ? field.id.trim() : "";
+
+  if (rawId) {
+    const index = fields.findIndex((f) => f.id === rawId);
     if (index !== -1) {
       const existing = fields[index]!;
       const updated: FormSecretaryField = {
@@ -213,13 +255,13 @@ export async function saveField(
   }
 
   const newField: FormSecretaryField = {
-    id: "field_" + Math.random().toString(36).substr(2, 9) + "_" + now,
     enabled: true,
     category: "Personal",
     matchType: "smart",
     targetProperty: "all",
     createdAt: now,
     ...field,
+    id: rawId || generateFieldId(),
   };
 
   fields.unshift(newField);
@@ -228,8 +270,20 @@ export async function saveField(
 }
 
 export async function deleteField(fieldId: string): Promise<boolean> {
+  if (!fieldId || typeof fieldId !== "string" || !fieldId.trim()) {
+    console.warn(
+      "[Storage] Invalid fieldId provided to deleteField:",
+      fieldId,
+    );
+    return false;
+  }
+  const cleanId = fieldId.trim();
   const fields = await getFields();
-  const filtered = fields.filter((f) => f.id !== fieldId);
+  const initialCount = fields.length;
+  const filtered = fields.filter((f) => f.id !== cleanId);
+  if (filtered.length === initialCount) {
+    return false;
+  }
   await setItem(getStorageKeys().FIELDS, filtered);
   return true;
 }
@@ -243,8 +297,12 @@ export async function toggleField(
   fieldId: string,
   enabled?: boolean,
 ): Promise<FormSecretaryField | null> {
+  if (!fieldId || typeof fieldId !== "string" || !fieldId.trim()) {
+    return null;
+  }
+  const cleanId = fieldId.trim();
   const fields = await getFields();
-  const field = fields.find((f) => f.id === fieldId);
+  const field = fields.find((f) => f.id === cleanId);
   if (field) {
     field.enabled = enabled !== undefined ? enabled : !field.enabled;
     field.updatedAt = Date.now();
@@ -322,7 +380,30 @@ export async function importData(imported: any): Promise<{
     await saveCategories(imported.categories);
   }
   if (Array.isArray(imported.fields)) {
-    await setItem(getStorageKeys().FIELDS, imported.fields);
+    const seenIds = new Set<string>();
+    const sanitizedFields: FormSecretaryField[] = imported.fields
+      .filter((f: any) => f && typeof f === "object" && f.label && f.value)
+      .map((f: any, idx: number) => {
+        let id = typeof f.id === "string" && f.id.trim() ? f.id.trim() : "";
+        if (!id || seenIds.has(id)) {
+          id =
+            "field_" +
+            Math.random().toString(36).substring(2, 11) +
+            "_" +
+            (Date.now() + idx);
+        }
+        seenIds.add(id);
+        return {
+          enabled: f.enabled !== false,
+          category: f.category || "Personal",
+          matchType: f.matchType || "smart",
+          targetProperty: f.targetProperty || "all",
+          createdAt: f.createdAt || Date.now(),
+          ...f,
+          id,
+        };
+      });
+    await setItem(getStorageKeys().FIELDS, sanitizedFields);
   }
   if (imported.settings && typeof imported.settings === "object") {
     await setItem(getStorageKeys().SETTINGS, imported.settings);

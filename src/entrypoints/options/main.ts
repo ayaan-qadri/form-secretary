@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     "btn-add-rule-opt",
   ) as HTMLElement;
 
+
   // Categories View Elements
   const optNewCategoryInput = document.getElementById(
     "opt-new-category-input",
@@ -429,9 +430,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function renderTable(): void {
-    if (!fieldsTbody) return;
-
+  function getFilteredFields(): FormSecretaryField[] {
     let filtered = allFields;
     if (selectedCategory !== "all") {
       filtered = filtered.filter(
@@ -453,12 +452,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
       });
     }
+    return filtered;
+  }
+
+  function renderTable(): void {
+    if (!fieldsTbody) return;
+
+    const filtered = getFilteredFields();
 
     if (filtered.length === 0) {
       fieldsTbody.replaceChildren();
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 7;
+      td.colSpan = 8;
       td.className = "text-center py-12 text-slate-400 text-sm font-medium";
       td.textContent = "No saved fields found.";
       tr.appendChild(td);
@@ -470,7 +476,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     filtered.forEach((field) => {
       const tr = document.createElement("tr");
-      tr.className = `hover:bg-slate-50/70 transition-colors ${field.enabled ? "" : "opacity-60 bg-slate-50/40"}`;
+      tr.className = `hover:bg-slate-50/70 cursor-pointer transition-colors  ${field.enabled ? "" : "opacity-60 bg-slate-50/40"}`;
+
 
       // 1. Switch
       const tdSwitch = document.createElement("td");
@@ -584,7 +591,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       tr.appendChild(tdMatch);
       tr.appendChild(tdActions);
 
-      const handleRowCopy = async () => {
+      const handleRowCopy = async (e?: Event) => {
+        if (e) e.stopPropagation();
         valBadge.classList.remove("fs-copied-flash");
         void (valBadge as HTMLElement).offsetWidth;
         valBadge.classList.add("fs-copied-flash");
@@ -594,7 +602,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       valBadge.addEventListener("click", handleRowCopy);
 
+      switchLabel.addEventListener("click", (e) => e.stopPropagation());
       switchInput.addEventListener("change", async (e) => {
+        e.stopPropagation();
         const updated = await toggleField(
           field.id,
           (e.target as HTMLInputElement).checked,
@@ -607,14 +617,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       btnCopy.addEventListener("click", handleRowCopy);
-      btnEdit.addEventListener("click", () => {
+      btnEdit.addEventListener("click", (e) => {
+        e.stopPropagation();
         modal.open(field, allCategories);
       });
-      btnDelete.addEventListener("click", async () => {
+      btnDelete.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!field.id) {
+          showToast("Unable to delete field: missing ID");
+          return;
+        }
         if (confirm(`Delete field "${field.label}"?`)) {
-          await deleteField(field.id);
-          await loadData();
-          showToast("Field deleted");
+          const success = await deleteField(field.id);
+          if (success) {
+            await loadData();
+            showToast("Field deleted");
+          } else {
+            showToast("Failed to delete field");
+          }
         }
       });
 

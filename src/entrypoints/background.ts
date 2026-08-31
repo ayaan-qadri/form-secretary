@@ -83,7 +83,11 @@ export default defineBackground(() => {
           ? result.fs_fields
           : [];
         const newField: FormSecretaryField = {
-          id: "field_" + Date.now(),
+          id:
+            "field_" +
+            Math.random().toString(36).substring(2, 11) +
+            "_" +
+            Date.now(),
           label:
             "Selected: " +
             (selectedText.length > 20

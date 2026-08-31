@@ -26,6 +26,11 @@ function buildOptionsDOM() {
       <select id="opt-category-filter"></select>
       <button id="btn-add-rule-opt">+ Add Field</button>
       <table>
+        <thead>
+          <tr>
+            
+          </tr>
+        </thead>
         <tbody id="opt-rules-tbody"></tbody>
       </table>
     </div>

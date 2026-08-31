@@ -25,6 +25,7 @@ import {
   toggleField,
 } from "../../shared/storage";
 import {
+  copyToClipboard,
   debounce,
   escapeHtml,
   exportJsonFile,
@@ -73,6 +74,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnOpenAddModal = document.getElementById(
     "btn-open-add-modal",
   ) as HTMLElement;
+
+  const btnPopupBulkClear = document.getElementById(
+    "btn-popup-bulk-clear",
+  ) as HTMLElement | null;
 
   // Scanner Tab Elements
   const pageFieldsContainer = document.getElementById(
@@ -279,7 +284,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
       searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && searchInput.value) {
+        if (e.key === "Escape" && (searchInput.value || searchQuery)) {
           searchInput.value = "";
           searchQuery = "";
           debouncedRenderFields.cancel();
@@ -722,10 +727,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function renderFields(): void {
-    const countAllEl = document.getElementById("count-all");
-    if (countAllEl) countAllEl.textContent = String(allFields.length);
-
+  function getPopupFilteredFields(): FormSecretaryField[] {
     let filtered = allFields;
     if (currentCategory !== "all") {
       filtered = filtered.filter(
@@ -747,6 +749,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
       });
     }
+    return filtered;
+  }
+
+  function renderFields(): void {
+    const countAllEl = document.getElementById("count-all");
+    if (countAllEl) countAllEl.textContent = String(allFields.length);
+
+    const filtered = getPopupFilteredFields();
 
     if (filtered.length === 0) {
       fieldsContainer.replaceChildren();
@@ -796,12 +806,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         field.enabled ? "" : "opacity-60 bg-slate-50/70"
       }`;
 
-      // Row 1: Header (label, category badge, toggle)
+      // Row 1: Header (select checkbox, label, category badge, toggle)
       const topRow = document.createElement("div");
       topRow.className = "flex items-center justify-between gap-2";
 
       const nameContainer = document.createElement("div");
       nameContainer.className = "flex items-center gap-1.5 flex-1 min-w-0";
+
 
       const labelSpan = document.createElement("span");
       labelSpan.className =
@@ -819,6 +830,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const switchLabel = document.createElement("label");
       switchLabel.className = "fs-switch";
       switchLabel.title = "Toggle field";
+      switchLabel.addEventListener("click", (e) => e.stopPropagation());
       const switchInput = document.createElement("input");
       switchInput.type = "checkbox";
       switchInput.className = "field-toggle-input";
@@ -905,7 +917,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       card.appendChild(valPreview);
       card.appendChild(bottomRow);
 
-      const handleCopy = async () => {
+      const handleCopy = async (e?: Event) => {
+        if (e) e.stopPropagation();
         await copyToClipboard(field.value);
         valPreview.classList.remove("fs-copied-flash");
         void (valPreview as HTMLElement).offsetWidth;
@@ -920,6 +933,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       valPreview.addEventListener("click", handleCopy);
 
       switchInput.addEventListener("change", async (e) => {
+        e.stopPropagation();
         const id = (e.target as HTMLElement).dataset.id;
         if (!id) return;
         const updated = await toggleField(
@@ -936,19 +950,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       btnCopy.addEventListener("click", handleCopy);
 
-      btnEdit.addEventListener("click", () => {
+      btnEdit.addEventListener("click", (e) => {
+        e.stopPropagation();
         modal.open(field, allCategories);
       });
 
-      btnDelete.addEventListener("click", async () => {
+      btnDelete.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!field.id) {
+          showToast("Unable to delete field: missing ID");
+          return;
+        }
         if (confirm(`Delete field "${field.label}"?`)) {
-          await deleteField(field.id);
-          allFields = (await getFields()) || [];
-          renderCategoryChips();
-          renderCategoryManager();
-          renderFields();
-          notifyActiveTab({ action: "REFRESH_FIELDS" });
-          showToast("Field deleted");
+          const success = await deleteField(field.id);
+          if (success) {
+            allFields = (await getFields()) || [];
+            renderCategoryChips();
+            renderCategoryManager();
+            renderFields();
+            notifyActiveTab({ action: "REFRESH_FIELDS" });
+            showToast("Field deleted");
+          } else {
+            showToast("Failed to delete field");
+          }
         }
       });
 
@@ -988,6 +1012,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (existingChips.length === filters.length) {
       existingChips.forEach((chipEl, idx) => {
         const filter = filters[idx];
+        if (!filter) return;
         const chip = chipEl as HTMLElement;
         chip.className = `fs-chip ${scannerFilter === filter.key ? "active" : ""}`;
         chip.dataset.filter = filter.key;
@@ -2325,7 +2350,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (
           typeof chrome !== "undefined" &&
           chrome.scripting &&
-          chrome.scripting.executeScript
+          chrome.scripting.executeScript &&
+          tab.id !== undefined
         ) {
           try {
             await chrome.scripting.executeScript({
