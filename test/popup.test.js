@@ -485,6 +485,50 @@ describe("Popup Controller", () => {
       assert.strictEqual(phoneFields[0].value, "987-654-3210");
     });
 
+    it("cleans UUIDs and machine identifiers when saving detected ATS fields", async () => {
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status",
+                id: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0",
+                label: "",
+                currentValue: "No",
+                matchesCount: 0,
+                topMatch: null,
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const pageContainer = document.getElementById("page-fields-container");
+      const btnSave = pageContainer.querySelector(".btn-create-from-field");
+      assert.ok(btnSave);
+      assert.strictEqual(btnSave.dataset.name, "EEOC Disability Status");
+      assert.strictEqual(btnSave.dataset.pattern, "");
+
+      const btnSaveAll = document.getElementById("btn-save-all-fields");
+      btnSaveAll.click();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const savedFields = await storage.getFields();
+      const eeocField = savedFields.find((f) => f.label === "EEOC Disability Status");
+      assert.ok(eeocField);
+      assert.strictEqual(eeocField.value, "No");
+      assert.ok(!eeocField.pattern.includes("9348dde4"));
+      assert.ok(!eeocField.pattern.includes("labeled-radio-0"));
+    });
+
     it("updates existing matched field via topMatch instead of creating duplicate field with page label", async () => {
       const existingField = await storage.saveField({
         label: "Primary Email Address",

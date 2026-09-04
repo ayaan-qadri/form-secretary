@@ -20,7 +20,7 @@ export function escapeHtml(str: any): string {
 }
 
 export function truncateText(str: any, maxLength = 24): string {
-  if (!str) return "";
+  if (str === null || str === undefined || str === "") return "";
   const s = String(str).trim();
   if (s.length <= maxLength) return s;
   return s.slice(0, maxLength).trim() + "…";
@@ -95,9 +95,9 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     if (textarea.focus) textarea.focus();
     if (textarea.select) textarea.select();
     if (textarea.setSelectionRange) textarea.setSelectionRange(0, text.length);
-    document.execCommand("copy");
+    const success = document.execCommand("copy");
     document.body.removeChild(textarea);
-    return true;
+    return !!success;
   } catch (e) {
     // Fallback failed
   }
@@ -148,12 +148,15 @@ export function debounce<T extends (...args: any[]) => any>(
 ): DebouncedFunction<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let result: ReturnType<T> | undefined;
+  let lastContext: any;
+  let lastArgs: Parameters<T> | null = null;
 
   const debounced = function (
     this: any,
     ...args: Parameters<T>
   ): ReturnType<T> | undefined {
-    const context = this;
+    lastContext = this;
+    lastArgs = args;
     const callNow = immediate && !timeout;
 
     if (timeout) {
@@ -163,12 +166,12 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(() => {
       timeout = null;
       if (!immediate) {
-        result = func.apply(context, args);
+        result = func.apply(lastContext, lastArgs!);
       }
     }, wait);
 
     if (callNow) {
-      result = func.apply(context, args);
+      result = func.apply(lastContext, lastArgs);
     }
 
     return result;
@@ -179,14 +182,15 @@ export function debounce<T extends (...args: any[]) => any>(
       clearTimeout(timeout);
       timeout = null;
     }
+    lastArgs = null;
   };
 
   debounced.flush = function () {
     if (timeout) {
       clearTimeout(timeout);
       timeout = null;
-      if (!immediate) {
-        result = func();
+      if (!immediate && lastArgs) {
+        result = func.apply(lastContext, lastArgs);
       }
     }
     return result;

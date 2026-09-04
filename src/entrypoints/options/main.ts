@@ -19,6 +19,7 @@ import {
   toggleField,
 } from "../../shared/storage";
 import {
+  copyToClipboard,
   debounce,
   escapeHtml,
   exportJsonFile,
@@ -593,6 +594,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const handleRowCopy = async (e?: Event) => {
         if (e) e.stopPropagation();
+        await copyToClipboard(field.value);
         valBadge.classList.remove("fs-copied-flash");
         void (valBadge as HTMLElement).offsetWidth;
         valBadge.classList.add("fs-copied-flash");

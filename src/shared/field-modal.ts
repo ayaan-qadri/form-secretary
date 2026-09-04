@@ -5,8 +5,8 @@
 
 import type { FormSecretaryField, MatchType } from "../types";
 import { MATCH_TYPE_CONFIG } from "./constants";
-import { escapeHtml } from "./utils";
-import { createIconElement, getIconSvg } from "./icons";
+import { createIconElement } from "./icons";
+import { cleanFieldIdentifier } from "./matcher";
 
 export { MATCH_TYPE_CONFIG };
 
@@ -50,13 +50,21 @@ export class FieldModal {
   }
 
   initEventListeners(): void {
-    // Modal save button (explicit click fallback if not handled by native form submit)
+    // Modal save button: trigger form submit cleanly once across browser and mock environments
     if (this.el.btnSave) {
-      this.el.btnSave.addEventListener("click", () => {
-        if (this.el.form && this.el.btnSave?.getAttribute("type") !== "submit") {
-          this.el.form.dispatchEvent(
-            new Event("submit", { cancelable: true, bubbles: true }),
-          );
+      this.el.btnSave.addEventListener("click", (e) => {
+        if (this.el.form) {
+          e.preventDefault();
+          const FormEvtClass = (globalThis as any).CustomEvent || (globalThis as any).Event;
+          const submitEvt = FormEvtClass
+            ? new FormEvtClass("submit", { cancelable: true, bubbles: true })
+            : ({ type: "submit", preventDefault: () => {} } as any);
+          try {
+            this.el.form.dispatchEvent(submitEvt);
+          } catch {
+            const fallbackEvt = { type: "submit", preventDefault: () => {}, target: this.el.form, bubbles: true };
+            this.el.form.dispatchEvent(fallbackEvt as any);
+          }
         }
       });
     }
@@ -96,25 +104,6 @@ export class FieldModal {
         this.updateFieldModeView(
           (this.el.formMatchType?.value as MatchType) || "smart",
         );
-      });
-    }
-
-    // Save button click
-    if (this.el.btnSave) {
-      this.el.btnSave.addEventListener("click", () => {
-        if (this.el.form) {
-          const FormEvtClass = (globalThis as any).CustomEvent || (globalThis as any).Event;
-          const submitEvt = FormEvtClass
-            ? new FormEvtClass("submit", { cancelable: true, bubbles: true })
-            : ({ type: "submit", preventDefault: () => {} } as any);
-          try {
-            this.el.form.dispatchEvent(submitEvt);
-          } catch {
-            // fallback for environments with strict Event objects
-            const fallbackEvt = { type: "submit", preventDefault: () => {}, target: this.el.form, bubbles: true };
-            this.el.form.dispatchEvent(fallbackEvt as any);
-          }
-        }
       });
     }
 
@@ -232,14 +221,16 @@ export class FieldModal {
     this.tags.forEach((tag, idx) => {
       const chip = document.createElement("span");
       chip.className =
-        "fs-tag-chip inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-medium";
+        "fs-tag-chip inline-flex items-center max-w-full gap-1 px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-xs font-medium";
 
       const textSpan = document.createElement("span");
+      textSpan.className = "truncate max-w-[200px]";
+      textSpan.title = tag;
       textSpan.textContent = tag;
 
       const removeBtn = document.createElement("span");
       removeBtn.className =
-        "fs-tag-remove cursor-pointer opacity-60 hover:opacity-100 hover:text-rose-600 transition-opacity ml-0.5 inline-flex items-center";
+        "fs-tag-remove cursor-pointer opacity-60 hover:opacity-100 hover:text-rose-600 transition-opacity ml-0.5 inline-flex items-center shrink-0";
       removeBtn.dataset.idx = String(idx);
       removeBtn.title = "Remove word";
       const closeIcon = createIconElement("close", {
@@ -270,14 +261,28 @@ export class FieldModal {
 
   addTag(text: string): void {
     if (!text) return;
+    const formLabel = (this.el.formLabel?.value || "").trim().toLowerCase();
     const parts = text
       .split(/[,;\n]+/)
-      .map((p) => p.trim())
+      .map((p) => {
+        let trimmed = p.trim();
+        if (
+          /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(
+            trimmed,
+          ) ||
+          /[0-9a-f]{16,}/i.test(trimmed)
+        ) {
+          trimmed = cleanFieldIdentifier(trimmed);
+        }
+        return trimmed;
+      })
       .filter(Boolean);
+
     let changed = false;
     parts.forEach((part) => {
       if (
         part &&
+        (!formLabel || part.toLowerCase() !== formLabel) &&
         !this.tags.some((t) => t.toLowerCase() === part.toLowerCase())
       ) {
         this.tags.push(part);
@@ -293,10 +298,35 @@ export class FieldModal {
     if (!patternStr || !patternStr.trim()) {
       this.tags = [];
     } else {
-      this.tags = patternStr
+      const formLabel = (this.el.formLabel?.value || "").trim().toLowerCase();
+      const rawTokens = patternStr
         .split(/[,;\n]+/)
-        .map((p) => p.trim())
-        .filter(Boolean);
+        .map((p) => {
+          let trimmed = p.trim();
+          if (
+            /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(
+              trimmed,
+            ) ||
+            /[0-9a-f]{16,}/i.test(trimmed)
+          ) {
+            trimmed = cleanFieldIdentifier(trimmed);
+          }
+          return trimmed;
+        })
+        .filter(
+          (t) => Boolean(t) && (!formLabel || t.toLowerCase() !== formLabel),
+        );
+
+      const seen = new Set<string>();
+      const uniqueTags: string[] = [];
+      for (const t of rawTokens) {
+        const lower = t.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          uniqueTags.push(t);
+        }
+      }
+      this.tags = uniqueTags;
     }
     this.renderTags();
   }

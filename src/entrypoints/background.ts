@@ -10,6 +10,7 @@ import type {
   ExtensionMessageResponse,
   FormSecretaryField,
 } from "../types";
+import { saveField } from "../shared/storage";
 
 export default defineBackground(() => {
   // Initialize context menus and inject content script into existing open tabs
@@ -78,39 +79,37 @@ export default defineBackground(() => {
       });
     } else if (info.menuItemId === "fs_save_selection" && info.selectionText) {
       const selectedText = info.selectionText;
-      chrome.storage.local.get(["fs_fields"], (result) => {
-        const fields: FormSecretaryField[] = Array.isArray(result.fs_fields)
-          ? result.fs_fields
-          : [];
-        const newField: FormSecretaryField = {
-          id:
-            "field_" +
-            Math.random().toString(36).substring(2, 11) +
-            "_" +
-            Date.now(),
-          label:
-            "Selected: " +
-            (selectedText.length > 20
-              ? selectedText.substring(0, 20) + "..."
-              : selectedText),
-          value: selectedText,
-          pattern: selectedText,
-          matchType: "smart",
-          targetProperty: "all",
-          category: "Personal",
-          enabled: true,
-          createdAt: Date.now(),
-        };
-        fields.unshift(newField);
-        chrome.storage.local.set({ fs_fields: fields }, () => {
+      const label =
+        "Selected: " +
+        (selectedText.length > 20
+          ? selectedText.substring(0, 20) + "..."
+          : selectedText);
+
+      saveField({
+        label,
+        value: selectedText,
+        pattern: selectedText,
+        matchType: "smart",
+        targetProperty: "all",
+        category: "Personal",
+        enabled: true,
+      })
+        .then(() => {
           if (tab.id) {
             const refreshMsg: ExtensionMessageRequest = {
               action: "REFRESH_FIELDS",
             };
-            chrome.tabs.sendMessage(tab.id, refreshMsg);
+            chrome.tabs.sendMessage(tab.id, refreshMsg, () => {
+              void chrome.runtime.lastError;
+            });
           }
+        })
+        .catch((err) => {
+          console.warn(
+            "[FormSecretary Background] Error saving selection:",
+            err,
+          );
         });
-      });
     }
   });
 
@@ -123,7 +122,11 @@ export default defineBackground(() => {
     if (
       changeInfo.status === "complete" &&
       tab.url &&
-      !tab.url.startsWith("chrome://")
+      !tab.url.startsWith("chrome://") &&
+      !tab.url.startsWith("edge://") &&
+      !tab.url.startsWith("about:") &&
+      !tab.url.startsWith("chrome-extension://") &&
+      !tab.url.startsWith("moz-extension://")
     ) {
       updateBadgeForTab(tabId);
     }

@@ -141,6 +141,18 @@ describe("Options Controller", () => {
     const fieldsAfterToggle = await storage.getFields();
     assert.strictEqual(fieldsAfterToggle[0].enabled, false);
 
+    // Copy field value via copy button
+    let copiedText = null;
+    globalThis.navigator.clipboard = {
+      async writeText(t) {
+        copiedText = t;
+      },
+    };
+    const btnCopy = rows[0].querySelector(".btn-copy-row");
+    btnCopy.click();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    assert.strictEqual(copiedText, "https://linkedin.com/in/testuser");
+
     // Delete field
     globalThis.confirm = () => true;
     const btnDelete = rows[0].querySelector(".btn-delete-row");

@@ -155,6 +155,42 @@ describe("FormSecretaryFieldModal", () => {
       assert.deepEqual(modalInstance.tags, ["red", "blue"]);
       assert.strictEqual(elements.formPattern.value, "red, blue");
     });
+
+    it("renders tag chips with truncation and intact delete buttons", () => {
+      modalInstance.setTagsFromPattern("super_long_tag_name_that_should_truncate");
+      const chip = elements.tagsList.querySelector(".fs-tag-chip");
+      assert.ok(chip);
+      assert.ok(chip.className.includes("max-w-full"));
+
+      const textSpan = chip.children[0];
+      assert.ok(textSpan);
+      assert.ok(textSpan.className.includes("truncate"));
+      assert.strictEqual(
+        textSpan.title,
+        "super_long_tag_name_that_should_truncate",
+      );
+
+      const removeBtn = chip.querySelector(".fs-tag-remove");
+      assert.ok(removeBtn);
+      assert.ok(removeBtn.className.includes("shrink-0"));
+    });
+
+    it("sanitizes raw machine UUIDs and filters duplicate field labels in setTagsFromPattern", () => {
+      elements.formLabel.value = "EEOC Disability Status";
+      modalInstance.setTagsFromPattern(
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status, 9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0, Extra Keyword",
+      );
+      // Cleaned UUIDs result in "EEOC Disability Status" which matches formLabel, so it's omitted
+      assert.deepEqual(modalInstance.tags, ["Extra Keyword"]);
+    });
+
+    it("sanitizes UUIDs when adding tags via addTag", () => {
+      elements.formLabel.value = "Custom Field";
+      modalInstance.addTag(
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status",
+      );
+      assert.deepEqual(modalInstance.tags, ["EEOC Disability Status"]);
+    });
   });
 
   describe("Mode view switching", () => {

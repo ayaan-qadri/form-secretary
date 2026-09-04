@@ -96,7 +96,7 @@ export function getIconSvg(name: string, options: IconOptions = {}): string {
   const size = options.size !== undefined ? String(options.size) : '16';
   const strokeWidth = options.strokeWidth !== undefined ? String(options.strokeWidth) : '2';
   const className = options.class ? `lucide-icon lucide-${name} ${options.class}` : `lucide-icon lucide-${name}`;
-  const ariaHidden = options.ariaHidden ?? true ? 'true' : 'false';
+  const ariaHidden = (options.ariaHidden ?? true) ? 'true' : 'false';
 
   const defaultAttrs: Record<string, string> = {
     xmlns: 'http://www.w3.org/2000/svg',

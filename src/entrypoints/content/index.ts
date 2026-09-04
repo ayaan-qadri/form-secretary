@@ -18,6 +18,7 @@ import { fillElement } from "../../content/filler";
 import {
   bringFieldToView,
   closeDropdown,
+  hideFloatingBar,
   hideTrigger,
   highlightFocusedElement,
   initShadowHost,
@@ -26,6 +27,7 @@ import {
   positionDropdown,
   positionTriggerPill,
   renderDropdown,
+  showFloatingBar,
   showSuccessState,
   showToast,
   updatePillContent,
@@ -44,10 +46,13 @@ export default defineContentScript({
   runAt: "document_idle",
   main() {
     const win = window as any;
+    if (win.__FORM_SECRETARY_INJECTED__) {
+      return;
+    }
+    win.__FORM_SECRETARY_INJECTED__ = true;
     try {
       document.getElementById("form-secretary-root")?.remove();
     } catch {}
-    win.__FORM_SECRETARY_INJECTED__ = true;
 
     let currentFields: FormSecretaryField[] = [];
     let currentSettings: FormSecretarySettings = {
@@ -293,17 +298,23 @@ export default defineContentScript({
       });
 
       // Reposition on scroll and resize only if field is active and trigger is currently visible
+      let scrollRaf: number | null = null;
       window.addEventListener(
         "scroll",
         () => {
-          if (
-            activeTargetElement &&
-            document.activeElement === activeTargetElement &&
-            isTriggerVisible()
-          ) {
-            positionTriggerPill(activeTargetElement, false);
-            if (isDropdownOpen()) positionDropdown();
-          }
+          if (scrollRaf !== null) return;
+          const rafFn = (typeof window !== "undefined" && window.requestAnimationFrame) || ((cb: () => void) => setTimeout(cb, 16));
+          scrollRaf = rafFn(() => {
+            scrollRaf = null;
+            if (
+              activeTargetElement &&
+              document.activeElement === activeTargetElement &&
+              isTriggerVisible()
+            ) {
+              positionTriggerPill(activeTargetElement, false);
+              if (isDropdownOpen()) positionDropdown();
+            }
+          }) as any;
         },
         { passive: true },
       );
@@ -479,9 +490,45 @@ export default defineContentScript({
       }
     }
 
+    function updateFloatingBarState(): void {
+      if (
+        !currentSettings.enabled ||
+        !currentSettings.showFloatingBar ||
+        window !== window.top
+      ) {
+        hideFloatingBar();
+        return;
+      }
+      try {
+        const detected = scanPageFields(currentFields);
+        const matched = detected.filter((f) => f.matchesCount > 0);
+        if (matched.length > 1) {
+          showFloatingBar(matched.length, () => {
+            const count = fillAllMatchedFieldsOnPage(
+              currentFields,
+              { extractFieldMetadata, findMatchingFields },
+              { fillElement },
+              currentSettings,
+            );
+            if (count > 0) {
+              showToast(
+                `Autofilled ${count} field${count === 1 ? "" : "s"} on page`,
+              );
+            }
+            hideFloatingBar();
+          });
+        } else {
+          hideFloatingBar();
+        }
+      } catch (e) {
+        hideFloatingBar();
+      }
+    }
+
     async function loadStorageData(): Promise<void> {
       currentFields = (await getFields()) || [];
       currentSettings = await getSettings();
+      updateFloatingBarState();
     }
 
     async function init(): Promise<void> {

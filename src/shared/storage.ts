@@ -17,35 +17,16 @@ import {
 
 export { STORAGE_KEYS, DEFAULT_CATEGORIES, DEFAULT_SETTINGS };
 
-const FALLBACK_STORAGE_KEYS = {
-  FIELDS: "fs_fields",
-  SETTINGS: "fs_settings",
-  CATEGORIES: "fs_categories",
-};
-
-const FALLBACK_CATEGORIES = ["Personal", "Job Apps"];
-
-const FALLBACK_SETTINGS: FormSecretarySettings = {
-  enabled: true,
-  showInlineButtons: true,
-  showFloatingBar: false,
-  theme: "system",
-  highlightFilledFields: true,
-  enableContextMenu: true,
-  maxCharsToHideTrigger: 3,
-};
-
 export function getStorageKeys() {
-  return STORAGE_KEYS || FALLBACK_STORAGE_KEYS;
+  return STORAGE_KEYS;
 }
 
 export function getDefaultCategories(): string[] {
-  const cats = DEFAULT_CATEGORIES || FALLBACK_CATEGORIES;
-  return Array.isArray(cats) ? [...cats] : ["Personal", "Job Apps"];
+  return [...DEFAULT_CATEGORIES];
 }
 
 export function getDefaultSettings(): FormSecretarySettings {
-  return { ...(DEFAULT_SETTINGS || FALLBACK_SETTINGS) };
+  return { ...DEFAULT_SETTINGS };
 }
 
 function isExtensionStorageAvailable(): boolean {
@@ -72,7 +53,7 @@ export async function getItem<T = any>(
           resolve(defaultValue);
         } else {
           resolve(
-            (result[key] !== undefined
+            (result && result[key] !== undefined
               ? result[key]
               : defaultValue) as T | null,
           );
@@ -380,6 +361,15 @@ export async function importData(imported: any): Promise<{
     await saveCategories(imported.categories);
   }
   if (Array.isArray(imported.fields)) {
+    const validMatchTypes = new Set(["smart", "contains", "exact", "regex"]);
+    const validTargetProps = new Set([
+      "all",
+      "label",
+      "name",
+      "id",
+      "placeholder",
+      "aria",
+    ]);
     const seenIds = new Set<string>();
     const sanitizedFields: FormSecretaryField[] = imported.fields
       .filter((f: any) => f && typeof f === "object" && f.label && f.value)
@@ -393,20 +383,72 @@ export async function importData(imported: any): Promise<{
             (Date.now() + idx);
         }
         seenIds.add(id);
+
+        const matchType = validMatchTypes.has(f.matchType)
+          ? f.matchType
+          : "smart";
+        const targetProperty = validTargetProps.has(f.targetProperty)
+          ? f.targetProperty
+          : "all";
+
         return {
-          enabled: f.enabled !== false,
-          category: f.category || "Personal",
-          matchType: f.matchType || "smart",
-          targetProperty: f.targetProperty || "all",
-          createdAt: f.createdAt || Date.now(),
-          ...f,
           id,
+          label: String(f.label).trim(),
+          value: String(f.value),
+          pattern:
+            typeof f.pattern === "string"
+              ? f.pattern
+              : String(f.label).trim(),
+          category:
+            typeof f.category === "string" && f.category.trim()
+              ? f.category.trim()
+              : "Personal",
+          matchType,
+          targetProperty,
+          enabled: f.enabled !== false,
+          createdAt:
+            typeof f.createdAt === "number" && !isNaN(f.createdAt)
+              ? f.createdAt
+              : Date.now(),
+          ...(typeof f.updatedAt === "number" && !isNaN(f.updatedAt)
+            ? { updatedAt: f.updatedAt }
+            : {}),
         };
       });
     await setItem(getStorageKeys().FIELDS, sanitizedFields);
   }
   if (imported.settings && typeof imported.settings === "object") {
-    await setItem(getStorageKeys().SETTINGS, imported.settings);
+    const def = getDefaultSettings();
+    const s = imported.settings;
+    const sanitizedSettings: FormSecretarySettings = {
+      enabled: typeof s.enabled === "boolean" ? s.enabled : def.enabled,
+      showInlineButtons:
+        typeof s.showInlineButtons === "boolean"
+          ? s.showInlineButtons
+          : def.showInlineButtons,
+      showFloatingBar:
+        typeof s.showFloatingBar === "boolean"
+          ? s.showFloatingBar
+          : def.showFloatingBar,
+      theme:
+        s.theme === "dark" || s.theme === "light" || s.theme === "system"
+          ? s.theme
+          : def.theme,
+      highlightFilledFields:
+        typeof s.highlightFilledFields === "boolean"
+          ? s.highlightFilledFields
+          : def.highlightFilledFields,
+      enableContextMenu:
+        typeof s.enableContextMenu === "boolean"
+          ? s.enableContextMenu
+          : def.enableContextMenu,
+      maxCharsToHideTrigger:
+        typeof s.maxCharsToHideTrigger === "number" &&
+        s.maxCharsToHideTrigger > 0
+          ? s.maxCharsToHideTrigger
+          : def.maxCharsToHideTrigger,
+    };
+    await setItem(getStorageKeys().SETTINGS, sanitizedSettings);
   }
 
   return {

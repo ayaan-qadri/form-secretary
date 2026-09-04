@@ -902,5 +902,105 @@ describe("FormSecretaryMatcher", () => {
       assert.strictEqual(meta.rawLabel, "Add-on URL");
       assert.strictEqual(meta.name, "slug");
     });
+
+    it("extracts question title for Greenhouse EEOC radio inputs inside field container", () => {
+      const container = new MockElement("div");
+      container.className = "field";
+      container.id =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status_container";
+
+      const questionLabel = new MockElement("label");
+      questionLabel.id =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status_label";
+      questionLabel.innerText = "Voluntary Self-Identification of Disability";
+
+      const radio = new MockElement("input");
+      radio.type = "radio";
+      radio.name =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status";
+      radio.id =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0";
+      radio.value = "Yes";
+
+      container.appendChild(questionLabel);
+      container.appendChild(radio);
+      globalThis.document.documentElement.appendChild(container);
+
+      const foundLabel = matcher.findLabelForElement(radio);
+      assert.strictEqual(
+        foundLabel,
+        "Voluntary Self-Identification of Disability",
+      );
+    });
+  });
+
+  describe("cleanFieldIdentifier", () => {
+    it("strips UUIDs and ATS prefixes/suffixes from field names", () => {
+      const name =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status";
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier(name),
+        "EEOC Disability Status",
+      );
+
+      const radioId =
+        "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0";
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier(radioId),
+        "EEOC Disability Status",
+      );
+    });
+
+    it("handles hex hashes, customfield prefixes, and camelCase", () => {
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("customfield_10025_phone_number"),
+        "Phone Number",
+      );
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier(
+          "c8f12a4b-1234-5678-9abc-def012345678_first_name",
+        ),
+        "First Name",
+      );
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("user[profile_attributes][ssn]"),
+        "User Profile Attributes SSN",
+      );
+    });
+
+    it("handles empty or invalid values safely", () => {
+      assert.strictEqual(matcher.cleanFieldIdentifier(""), "");
+      assert.strictEqual(matcher.cleanFieldIdentifier(null), "");
+      assert.strictEqual(matcher.cleanFieldIdentifier(undefined), "");
+    });
+  });
+
+  describe("extractSuggestedKeywords", () => {
+    it("excludes raw DOM IDs and terms matching display name", () => {
+      const field = {
+        name: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status",
+        id: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0",
+        label: "EEOC Disability Status",
+      };
+      // When display name already matches the cleaned name/label, returns empty
+      const keywords = matcher.extractSuggestedKeywords(
+        field,
+        "EEOC Disability Status",
+      );
+      assert.strictEqual(keywords, "");
+    });
+
+    it("provides cleaned keywords when name offers distinct informative words", () => {
+      const field = {
+        name: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status",
+        id: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0",
+      };
+      const keywords = matcher.extractSuggestedKeywords(
+        field,
+        "Disability Status",
+      );
+      // Cleaned name is "EEOC Disability Status", which provides extra keyword "EEOC Disability Status"
+      assert.strictEqual(keywords, "EEOC Disability Status");
+    });
   });
 });

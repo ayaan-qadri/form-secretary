@@ -4,8 +4,7 @@
  */
 
 import type { ScoredFieldMatch } from "../types";
-import { escapeHtml } from "../shared/utils";
-import { createIconElement, getIconSvg } from "../shared/icons";
+import { createIconElement } from "../shared/icons";
 
 let shadowRoot: ShadowRoot | null = null;
 let triggerContainer: HTMLElement | null = null;
@@ -105,39 +104,6 @@ export function createBrandLogoElement(): SVGElement {
   return svg;
 }
 
-// Inline SVG Logo matching the extension's official icon
-export const BRAND_LOGO_SVG = `
-  <svg class="fs-trigger-logo-svg" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="fs-pill-brand-grad" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stop-color="#3b82f6"/>
-        <stop offset="100%" stop-color="#2563eb"/>
-      </linearGradient>
-    </defs>
-    <rect width="128" height="128" rx="28" fill="url(#fs-pill-brand-grad)"/>
-    <rect x="36" y="28" width="16" height="72" rx="4" fill="#ffffff"/>
-    <rect x="36" y="28" width="56" height="16" rx="4" fill="#ffffff"/>
-    <rect x="36" y="56" width="42" height="14" rx="3" fill="#ffffff"/>
-    <path d="M94 72 C94 80, 98 84, 106 84 C98 84, 94 88, 94 96 C94 88, 90 84, 82 84 C90 84, 94 80, 94 72 Z" fill="#34d399"/>
-    <circle cx="104" cy="74" r="2.5" fill="#34d399" fill-opacity="0.95"/>
-  </svg>
-`;
-
-// Inline Lucide Checkmark Icon
-export const SUCCESS_CHECKMARK_SVG = getIconSvg("check", {
-  class: "fs-trigger-success-svg",
-  size: 16,
-  strokeWidth: 3,
-  style: "color: #10b981;",
-});
-
-// Inline Lucide Chevron Down Icon
-export const CHEVRON_DOWN_SVG = getIconSvg("chevron-down", {
-  class: "fs-pill-arrow",
-  size: 11,
-  strokeWidth: 2.5,
-});
-
 export function initShadowHost(
   callbacks: { onTriggerClick?: () => void } = {},
 ) {
@@ -152,7 +118,9 @@ export function initShadowHost(
     }
     host = document.createElement("div");
     host.id = "form-secretary-root";
-    (document.body || document.documentElement).appendChild(host);
+    host.style.cssText =
+      "position: absolute; top: 0; left: 0; width: 0; height: 0; pointer-events: none; z-index: 2147483647;";
+    (document.documentElement || document.body).appendChild(host);
     shadowRoot = null;
     triggerContainer = null;
     dropdownContainer = null;
@@ -379,10 +347,43 @@ export function injectShadowStyles(root: ShadowRoot): void {
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .fs-trigger-pill, .fs-dropdown, .fs-dropdown-item {
+      .fs-trigger-pill, .fs-dropdown, .fs-dropdown-item, .fs-floating-bar {
         animation: none !important;
         transition: none !important;
       }
+    }
+
+    /* Floating Mass-Fill Bar */
+    .fs-floating-bar {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      padding: 6px 14px 6px 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+      z-index: 2147483646;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
+      user-select: none;
+      font-weight: 600;
+      font-size: 12px;
+      color: #0f172a;
+    }
+
+    .fs-floating-bar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .fs-floating-bar:active {
+      transform: translateY(0);
     }
   `;
   root.appendChild(style);
@@ -436,6 +437,11 @@ export function createUIElements(
   dropdownContainer = document.createElement("div");
   dropdownContainer.className = "fs-dropdown";
   root.appendChild(dropdownContainer);
+
+  // 3. Floating Mass-Fill Bar
+  floatingBarContainer = document.createElement("div");
+  floatingBarContainer.className = "fs-floating-bar";
+  root.appendChild(floatingBarContainer);
 }
 
 export function isTriggerVisible(): boolean {
@@ -887,5 +893,49 @@ export function bringFieldToView(
     return false;
   }
 }
+
+export function showFloatingBar(
+  count: number,
+  onClick?: () => void,
+): void {
+  if (!floatingBarContainer || count <= 0) return;
+  floatingBarContainer.replaceChildren();
+
+  const iconWrap = document.createElement("div");
+  iconWrap.className = "fs-icon-container";
+  const logo = createBrandLogoElement();
+  logo.style.width = "16px";
+  logo.style.height = "16px";
+  iconWrap.appendChild(logo);
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = `Autofill ${count} field${count === 1 ? "" : "s"}`;
+
+  const sparkIcon = createIconElement("sparkles", {
+    size: 13,
+    class: "w-3.5 h-3.5 text-blue-600",
+  });
+
+  floatingBarContainer.replaceChildren(
+    iconWrap,
+    textSpan,
+    sparkIcon || document.createTextNode(""),
+  );
+
+  floatingBarContainer.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) onClick();
+  };
+
+  floatingBarContainer.style.display = "flex";
+}
+
+export function hideFloatingBar(): void {
+  if (floatingBarContainer) {
+    floatingBarContainer.style.display = "none";
+  }
+}
+
 
 

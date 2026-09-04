@@ -21,6 +21,130 @@ export function cleanString(str: any): string {
     .trim();
 }
 
+/**
+ * Cleans machine-generated field names, UUIDs, hashes, and ATS prefixes/suffixes
+ * into human-readable labels or clean keyword tokens.
+ *
+ * Example: "9348dde4-b215-4690-add7-2547832d0e4b__systemfield_eeoc_disability_status-labeled-radio-0"
+ * Returns: "EEOC Disability Status"
+ */
+export function cleanFieldIdentifier(raw: string): string {
+  if (!raw || typeof raw !== "string") return "";
+
+  let s = raw.trim();
+
+  // 1. Remove UUID patterns (e.g. 9348dde4-b215-4690-add7-2547832d0e4b)
+  s = s.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[-_]*/gi, "");
+
+  // 2. Remove long hex / hash strings (16+ hex characters)
+  s = s.replace(/[0-9a-f]{16,}[-_]*/gi, "");
+
+  // 3. Remove DOM element / radio / option suffixes
+  // e.g. -labeled-radio-0, _radio_0, -option-1, -input-0, -0, _0
+  s = s.replace(/[-_]labeled[-_]radio[-_]\d+/gi, "");
+  s = s.replace(/[-_](?:radio|option|choice|input|group)[-_]\d+/gi, "");
+  s = s.replace(/[-_]\d+$/g, "");
+
+  // 4. Remove system / framework prefixes with optional ID numbers
+  // e.g. systemfield_, customfield_10025_, customfield123_, field_456_, input_, form_
+  s = s.replace(
+    /^(?:systemfield|customfield|field|input|form|c|attr)[-_]*(?:\d+[-_]*)?/gi,
+    "",
+  );
+
+  // 5. Replace brackets, dots, dashes, underscores with spaces
+  s = s.replace(/[\[\]_.-]+/g, " ");
+
+  // 6. Split camelCase or PascalCase into words
+  s = s.replace(/([a-z])([A-Z])/g, "$1 $2");
+
+  // 7. Collapse multiple spaces and trim
+  s = s.replace(/\s+/g, " ").trim();
+
+  if (!s) return "";
+
+  // 8. Convert to Title Case, preserving recognized acronyms
+  const acronyms = new Set(["EEOC", "SSN", "URL", "ID", "API", "DOB", "ZIP", "IP", "CVV", "PIN"]);
+  const words = s.split(" ").filter(Boolean);
+
+  const formattedWords = words.map((w) => {
+    const upper = w.toUpperCase();
+    if (acronyms.has(upper)) return upper;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  });
+
+  return formattedWords.join(" ");
+}
+
+/**
+ * Extracts clean, non-redundant extra keywords from a detected field's metadata.
+ * Deliberately excludes raw element IDs and UUIDs, and filters out terms
+ * that duplicate the field's display name.
+ */
+export function extractSuggestedKeywords(
+  field: {
+    name?: string;
+    id?: string;
+    placeholder?: string;
+    label?: string;
+  },
+  displayName = "",
+): string {
+  if (!field) return "";
+
+  const cleanDisplay = cleanString(displayName);
+  const keywords: string[] = [];
+
+  const addCandidate = (cand: string | undefined) => {
+    if (!cand || typeof cand !== "string") return;
+    const cleaned = cleanFieldIdentifier(cand);
+    if (!cleaned || cleaned.length < 2) return;
+
+    const norm = cleanString(cleaned);
+    if (!norm) return;
+
+    // Skip if it is identical to or already contained in displayName
+    if (norm === cleanDisplay || cleanDisplay.includes(norm)) return;
+
+    // Skip if already in keywords list
+    if (keywords.some((kw) => cleanString(kw) === norm)) return;
+
+    keywords.push(cleaned);
+  };
+
+  // 1. Candidate from field.label (if different from displayName)
+  if (field.label && cleanString(field.label) !== cleanDisplay) {
+    addCandidate(field.label);
+  }
+
+  // 2. Candidate from field.placeholder (if not generic)
+  if (field.placeholder) {
+    const normPlaceholder = cleanString(field.placeholder);
+    const genericPlaceholders = [
+      "type here",
+      "enter",
+      "enter here",
+      "select",
+      "select one",
+      "choose",
+      "search",
+    ];
+    if (
+      normPlaceholder.length >= 3 &&
+      !genericPlaceholders.includes(normPlaceholder)
+    ) {
+      addCandidate(field.placeholder);
+    }
+  }
+
+  // 3. Candidate from cleaned field.name
+  if (field.name) {
+    addCandidate(field.name);
+  }
+
+  return keywords.join(", ");
+}
+
 function cleanExtractedLabelText(text: string): string {
   if (!text) return "";
   return text
@@ -136,11 +260,11 @@ export function findLabelForElement(element: HTMLElement | null): string {
     if ((isRadio || isCheckbox) && element.closest) {
 
       const container = element.closest(
-        "fieldset, [data-field-path], ._fieldEntry, [class*='fieldEntry'], ._container_1258i_28, ._yesno, [class*='yesno']",
+        "fieldset, [data-field-path], ._fieldEntry, [class*='fieldEntry'], ._container_1258i_28, ._yesno, [class*='yesno'], .field, [class*='field-wrapper'], [class*='form-field'], [class*='form-group'], [id*='_container'], [id*='container']",
       );
       if (container) {
         const groupLabel = container.querySelector(
-          "legend, label.ashby-application-form-question-title, [class*='question-title'], [class*='field-title'], .field-label, .form-label, [data-testid*='label']",
+          "legend, label.ashby-application-form-question-title, [class*='question-title'], [class*='field-title'], .field-label, .form-label, [data-testid*='label'], label[id*='_label'], label[id*='label']",
         ) as HTMLElement;
         if (
           groupLabel &&
@@ -205,7 +329,44 @@ export function findLabelForElement(element: HTMLElement | null): string {
           element.closest("[data-name]")?.getAttribute("data-name")) ||
         "";
 
-      // 2. Matching <label for="id">, <label for="name">, <label data-for="..."> or <label for="data-field-path">
+      // 2. Direct fast query for <label for="id">
+      if (idVal && typeof document.querySelector === "function") {
+        try {
+          const escapedId =
+            typeof CSS !== "undefined" && CSS.escape
+              ? CSS.escape(idVal)
+              : idVal;
+          const label = document.querySelector(
+            `label[for="${escapedId}"]`,
+          ) as HTMLElement;
+          if (label && (label.innerText || label.textContent)) {
+            const t = cleanExtractedLabelText(
+              label.innerText || label.textContent || "",
+            );
+            if (t) return t;
+          }
+        } catch (e) {}
+      }
+
+      if (nameVal && typeof document.querySelector === "function") {
+        try {
+          const escapedName =
+            typeof CSS !== "undefined" && CSS.escape
+              ? CSS.escape(nameVal)
+              : nameVal;
+          const labelByName = document.querySelector(
+            `label[id="${escapedName}_label"], label[id="${escapedName}-label"], label[for="${escapedName}"]`,
+          ) as HTMLElement;
+          if (labelByName && (labelByName.innerText || labelByName.textContent)) {
+            const t = cleanExtractedLabelText(
+              labelByName.innerText || labelByName.textContent || "",
+            );
+            if (t) return t;
+          }
+        } catch (e) {}
+      }
+
+      // Matching <label for="id">, <label for="name">, <label data-for="..."> or <label for="data-field-path">
       try {
         const allLabels = document.getElementsByTagName("label");
         for (let i = 0; i < allLabels.length; i++) {
@@ -223,22 +384,6 @@ export function findLabelForElement(element: HTMLElement | null): string {
           ) {
             const t = cleanExtractedLabelText(
               l.innerText || l.textContent || "",
-            );
-            if (t) return t;
-          }
-        }
-      } catch (e) {}
-
-      // Fallback query with CSS.escape
-      try {
-        if (idVal && typeof CSS !== "undefined" && CSS.escape) {
-          const escapedId = CSS.escape(idVal);
-          const label = document.querySelector(
-            `label[for="${escapedId}"]`,
-          ) as HTMLElement;
-          if (label && (label.innerText || label.textContent)) {
-            const t = cleanExtractedLabelText(
-              label.innerText || label.textContent || "",
             );
             if (t) return t;
           }
