@@ -60,6 +60,39 @@ describe("FormSecretaryUtils", () => {
     });
   });
 
+  describe("isRestrictedUrl", () => {
+    it("returns false for empty, null, or undefined input", () => {
+      assert.strictEqual(utils.isRestrictedUrl(""), false);
+      assert.strictEqual(utils.isRestrictedUrl(null), false);
+      assert.strictEqual(utils.isRestrictedUrl(undefined), false);
+    });
+
+    it("returns true for browser-internal and view-source schemes", () => {
+      assert.strictEqual(utils.isRestrictedUrl("chrome://settings"), true);
+      assert.strictEqual(utils.isRestrictedUrl("edge://flags"), true);
+      assert.strictEqual(utils.isRestrictedUrl("about:blank"), true);
+      assert.strictEqual(
+        utils.isRestrictedUrl("chrome-extension://abc/popup.html"),
+        true,
+      );
+      assert.strictEqual(
+        utils.isRestrictedUrl("moz-extension://abc/popup.html"),
+        true,
+      );
+      assert.strictEqual(utils.isRestrictedUrl("view-source:https://a.com"), true);
+    });
+
+    it("matches schemes case-insensitively", () => {
+      assert.strictEqual(utils.isRestrictedUrl("CHROME://settings"), true);
+    });
+
+    it("returns false for regular web and file URLs", () => {
+      assert.strictEqual(utils.isRestrictedUrl("https://example.com/login"), false);
+      assert.strictEqual(utils.isRestrictedUrl("http://localhost:3000"), false);
+      assert.strictEqual(utils.isRestrictedUrl("file:///C:/form.html"), false);
+    });
+  });
+
 
 
   describe("showToast", () => {

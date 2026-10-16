@@ -287,6 +287,113 @@ describe("Content Script Coordinator", () => {
       assert.strictEqual(ui.isTriggerVisible(), false);
     });
 
+    it("calls window.requestAnimationFrame bound to window on scroll when focused", async () => {
+      let thisArg = null;
+      let rafCalled = false;
+      const originalRaf = window.requestAnimationFrame;
+
+      window.requestAnimationFrame = function (cb) {
+        thisArg = this;
+        if (this !== window) {
+          throw new TypeError(
+            "'requestAnimationFrame' called on an object that does not implement interface Window."
+          );
+        }
+        rafCalled = true;
+        cb();
+        return 123;
+      };
+
+      try {
+        await storage.saveField({
+          label: "First Name",
+          value: "John",
+          pattern: "first name",
+        });
+
+        for (const listener of chrome._messageListeners) {
+          listener({ action: "REFRESH_FIELDS" }, {}, () => {});
+        }
+        await new Promise((resolve) => setTimeout(resolve, 60));
+
+        const input = new MockElement("input");
+        input.setAttribute("name", "first_name");
+        document.body.appendChild(input);
+
+        const focusEvent = new MockEvent("focusin", { bubbles: true });
+        input.dispatchEvent(focusEvent);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const { triggerContainer } = ui.initShadowHost();
+        assert.strictEqual(triggerContainer.style.display, "flex");
+        assert.strictEqual(ui.isTriggerVisible(), true);
+
+        const scrollEvent = new MockEvent("scroll");
+        assert.doesNotThrow(() => {
+          window.dispatchEvent(scrollEvent);
+        });
+
+        assert.strictEqual(rafCalled, true);
+        assert.strictEqual(thisArg, window);
+        assert.strictEqual(triggerContainer.style.display, "flex");
+        assert.strictEqual(ui.isTriggerVisible(), true);
+      } finally {
+        if (originalRaf) {
+          window.requestAnimationFrame = originalRaf;
+        } else {
+          delete window.requestAnimationFrame;
+        }
+      }
+    });
+
+    it("gracefully falls back to setTimeout on scroll when requestAnimationFrame throws (Firefox content script sandbox)", async () => {
+      const originalRaf = window.requestAnimationFrame;
+
+      window.requestAnimationFrame = function () {
+        throw new TypeError(
+          "'requestAnimationFrame' called on an object that does not implement interface Window."
+        );
+      };
+
+      try {
+        await storage.saveField({
+          label: "First Name",
+          value: "John",
+          pattern: "first name",
+        });
+
+        for (const listener of chrome._messageListeners) {
+          listener({ action: "REFRESH_FIELDS" }, {}, () => {});
+        }
+        await new Promise((resolve) => setTimeout(resolve, 60));
+
+        const input = new MockElement("input");
+        input.setAttribute("name", "first_name");
+        document.body.appendChild(input);
+
+        const focusEvent = new MockEvent("focusin", { bubbles: true });
+        input.dispatchEvent(focusEvent);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const { triggerContainer } = ui.initShadowHost();
+        assert.strictEqual(triggerContainer.style.display, "flex");
+
+        const scrollEvent = new MockEvent("scroll");
+        assert.doesNotThrow(() => {
+          window.dispatchEvent(scrollEvent);
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        assert.strictEqual(triggerContainer.style.display, "flex");
+      } finally {
+        if (originalRaf) {
+          window.requestAnimationFrame = originalRaf;
+        } else {
+          delete window.requestAnimationFrame;
+        }
+      }
+    });
+
     it("handles FOCUS_FIELD runtime message and brings element to view", async () => {
       const input = new MockElement("input");
       input.setAttribute("name", "profile_url");

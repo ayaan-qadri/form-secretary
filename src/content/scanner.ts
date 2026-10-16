@@ -26,6 +26,7 @@ export function findAllInputControls(
   if (!rootNode || currentDepth > maxDepth) return [];
 
   const results: HTMLElement[] = [];
+  const resultSet = new Set<HTMLElement>();
   const seen = new Set<Node>();
 
   function traverse(node: Node, depth: number) {
@@ -39,7 +40,8 @@ export function findAllInputControls(
         const directInputs = parentEl.querySelectorAll(INPUT_SELECTOR);
         for (let i = 0; i < directInputs.length; i++) {
           const el = directInputs[i] as HTMLElement;
-          if (el && !results.includes(el) && isElementVisible(el)) {
+          if (el && !resultSet.has(el) && isElementVisible(el)) {
+            resultSet.add(el);
             results.push(el);
           }
         }

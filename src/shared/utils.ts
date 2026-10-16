@@ -26,6 +26,24 @@ export function truncateText(str: any, maxLength = 24): string {
   return s.slice(0, maxLength).trim() + "…";
 }
 
+const RESTRICTED_URL_PREFIXES = [
+  "chrome://",
+  "edge://",
+  "about:",
+  "chrome-extension://",
+  "moz-extension://",
+  "view-source:",
+];
+
+/**
+ * Returns true for browser-internal pages where content scripts cannot run and
+ * runtime messaging will fail. Used to short-circuit injection and tab messaging.
+ */
+export function isRestrictedUrl(url?: string | null): boolean {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return RESTRICTED_URL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+}
 
 export function showToast(
   element: HTMLElement | null,

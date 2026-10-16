@@ -11,6 +11,7 @@ import type {
   FormSecretaryField,
 } from "../types";
 import { saveField } from "../shared/storage";
+import { isRestrictedUrl } from "../shared/utils";
 
 export default defineBackground(() => {
   // Initialize context menus and inject content script into existing open tabs
@@ -40,15 +41,7 @@ export default defineBackground(() => {
           url: ["http://*/*", "https://*/*"],
         });
         for (const tab of tabs) {
-          if (
-            tab.id &&
-            tab.url &&
-            !tab.url.startsWith("chrome://") &&
-            !tab.url.startsWith("edge://") &&
-            !tab.url.startsWith("about:") &&
-            !tab.url.startsWith("chrome-extension://") &&
-            !tab.url.startsWith("moz-extension://")
-          ) {
+          if (tab.id && tab.url && !isRestrictedUrl(tab.url)) {
             chrome.scripting
               .executeScript({
                 target: { tabId: tab.id, allFrames: true },
@@ -122,11 +115,7 @@ export default defineBackground(() => {
     if (
       changeInfo.status === "complete" &&
       tab.url &&
-      !tab.url.startsWith("chrome://") &&
-      !tab.url.startsWith("edge://") &&
-      !tab.url.startsWith("about:") &&
-      !tab.url.startsWith("chrome-extension://") &&
-      !tab.url.startsWith("moz-extension://")
+      !isRestrictedUrl(tab.url)
     ) {
       updateBadgeForTab(tabId);
     }

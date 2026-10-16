@@ -29,6 +29,7 @@ import {
   debounce,
   escapeHtml,
   exportJsonFile,
+  isRestrictedUrl,
   readJsonFile,
   showToast as utilsShowToast,
   truncateText,
@@ -1204,13 +1205,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (fields.length === 0 && (!response || !response.fields)) {
         const urlStr = (tab?.url || tab?.pendingUrl || "").toLowerCase();
         const isAmoUrl = urlStr.includes("addons.mozilla.org");
-        const isRestrictedUrl =
+        const isRestrictedPage =
           isAmoUrl ||
-          urlStr.startsWith("chrome://") ||
-          urlStr.startsWith("edge://") ||
-          urlStr.startsWith("about:") ||
-          urlStr.startsWith("chrome-extension://") ||
-          urlStr.startsWith("moz-extension://") ||
+          isRestrictedUrl(urlStr) ||
           urlStr.includes("chromewebstore.google.com") ||
           urlStr.includes("chrome.google.com/webstore");
 
@@ -1228,7 +1225,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (isAmoUrl) {
           renderRestrictedPageState(pageFieldsContainer, tab, "amo", restrictedCtx);
-        } else if (isRestrictedUrl) {
+        } else if (isRestrictedPage) {
           renderRestrictedPageState(pageFieldsContainer, tab, "restricted", restrictedCtx);
         } else if (isFileUrl) {
           renderRestrictedPageState(pageFieldsContainer, tab, "file", restrictedCtx);

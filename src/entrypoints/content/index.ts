@@ -298,13 +298,13 @@ export default defineContentScript({
       });
 
       // Reposition on scroll and resize only if field is active and trigger is currently visible
-      let scrollRaf: number | null = null;
+      let isRafBroken = false;
+      let scrollRaf: number | ReturnType<typeof setTimeout> | null = null;
       window.addEventListener(
         "scroll",
         () => {
           if (scrollRaf !== null) return;
-          const rafFn = (typeof window !== "undefined" && window.requestAnimationFrame) || ((cb: () => void) => setTimeout(cb, 16));
-          scrollRaf = rafFn(() => {
+          const reposition = () => {
             scrollRaf = null;
             if (
               activeTargetElement &&
@@ -314,7 +314,24 @@ export default defineContentScript({
               positionTriggerPill(activeTargetElement, false);
               if (isDropdownOpen()) positionDropdown();
             }
-          }) as any;
+          };
+
+          if (
+            !isRafBroken &&
+            typeof window !== "undefined" &&
+            typeof window.requestAnimationFrame === "function"
+          ) {
+            try {
+              scrollRaf = window.requestAnimationFrame(reposition);
+            } catch {
+              // In Firefox WebExtension content scripts, window is a Sandbox object that
+              // does not implement interface Window, causing requestAnimationFrame to throw.
+              isRafBroken = true;
+              scrollRaf = setTimeout(reposition, 16);
+            }
+          } else {
+            scrollRaf = setTimeout(reposition, 16);
+          }
         },
         { passive: true },
       );
@@ -427,6 +444,9 @@ export default defineContentScript({
             sender,
             sendResponse: (res: ExtensionMessageResponse) => void,
           ) => {
+            if (!request || typeof request !== "object" || !request.action) {
+              return false;
+            }
             if (request.action === "GET_PAGE_FIELDS") {
               const fields = scanPageFields(currentFields);
               // If we are in a subframe/iframe and have 0 fields, do not send response

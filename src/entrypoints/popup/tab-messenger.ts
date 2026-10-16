@@ -7,6 +7,7 @@ import type {
   ExtensionMessageRequest,
   ExtensionMessageResponse,
 } from "../../types";
+import { isRestrictedUrl } from "../../shared/utils";
 
 export function getActiveBrowserTab(
   callback: (tab: chrome.tabs.Tab | null) => void,
@@ -83,16 +84,7 @@ export function dispatchMessageToTab(
     }
   };
 
-  if (
-    !tab ||
-    !tab.id ||
-    (tab.url &&
-      (tab.url.startsWith("chrome://") ||
-        tab.url.startsWith("edge://") ||
-        tab.url.startsWith("about:") ||
-        tab.url.startsWith("chrome-extension://") ||
-        tab.url.startsWith("moz-extension://")))
-  ) {
+  if (!tab || !tab.id || isRestrictedUrl(tab.url)) {
     safeCallback(null, tab);
     return;
   }
