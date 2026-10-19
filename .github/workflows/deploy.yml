@@ -66,15 +66,19 @@ jobs:
         with:
           name: form-secretary-packages
           path: .output/*.zip
+          include-hidden-files: true
           retention-days: 14
 
       - name: Submit to Chrome Web Store
         if: github.event_name == 'release' || inputs.target == 'all' || inputs.target == 'chrome'
         run: |
-          if [ -z "$CHROME_CLIENT_ID" ] || [ -z "$CHROME_EXTENSION_ID" ] || [ -z "$CHROME_CLIENT_SECRET" ] || [ -z "$CHROME_REFRESH_TOKEN" ]; then
-            echo "::error ::Missing Chrome Web Store credentials. Please configure CHROME_CLIENT_ID, CHROME_EXTENSION_ID, CHROME_CLIENT_SECRET, and CHROME_REFRESH_TOKEN in repository secrets."
+          if [ -z "$CHROME_EXTENSION_ID" ] || [ -z "$CHROME_PUBLISHER_ID" ] || [ -z "$CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL" ] || [ -z "$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY" ]; then
+            echo "::error ::Missing Chrome Web Store credentials. Configure CHROME_EXTENSION_ID, CHROME_PUBLISHER_ID, CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL, and CHROME_SERVICE_ACCOUNT_PRIVATE_KEY in repository secrets."
             exit 1
           fi
+
+          export CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="$(printf '%s' "$CHROME_SERVICE_ACCOUNT_PRIVATE_KEY" \
+            | sed -e 's/^"//' -e 's/"$//' -e 's/\\n/\n/g')"
 
           CHROME_ZIP=$(find .output -name "*-chrome.zip" -type f | head -n 1)
           if [ -z "$CHROME_ZIP" ] || [ ! -f "$CHROME_ZIP" ]; then
@@ -90,11 +94,11 @@ jobs:
 
           pnpm wxt submit --chrome-zip "$CHROME_ZIP" $DRY_RUN_FLAG
         env:
+          CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          CHROME_PUBLISH_TARGET: ${{ secrets.CHROME_PUBLISH_TARGET || 'default' }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
 
       - name: Submit to Mozilla Firefox Add-ons (AMO)
         if: github.event_name == 'release' || inputs.target == 'all' || inputs.target == 'firefox'
