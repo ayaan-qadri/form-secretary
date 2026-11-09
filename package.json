@@ -1,6 +1,6 @@
 {
   "name": "form-secretary",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Smart cross-browser autofill extension for web forms",
   "type": "module",
   "scripts": {
