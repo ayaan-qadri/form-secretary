@@ -432,12 +432,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (!val) continue;
 
           const cleanName = cleanFieldIdentifier(field.name || "");
+          const cleanId = cleanFieldIdentifier(field.id || "");
           const rawDisplayName =
             field.label ||
             field.placeholder ||
             cleanName ||
-            field.name ||
-            field.id ||
+            cleanId ||
             `Input #${field.index + 1}`;
           const displayName =
             rawDisplayName.replace(/\s*[*:]+$/, "").trim() || rawDisplayName;
@@ -1045,14 +1045,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function isFieldFilled(field: DetectedPageField): boolean {
+    const rawVal =
+      typeof field.currentValue === "string" ? field.currentValue.trim() : "";
+    const isPlaceholderVal =
+      /^[-–—\s]*(?:none|select|select one|select an option|choose|choose one|please select)[-–—\s.]*$/i.test(
+        rawVal,
+      );
+    if (!rawVal || isPlaceholderVal) return false;
+
     const topMatch = field.topMatch;
     return topMatch
-      ? typeof field.currentValue === "string" &&
-        field.currentValue.trim().length > 0 &&
-        field.currentValue.trim().toLowerCase() ===
-          topMatch.value.trim().toLowerCase()
-      : typeof field.currentValue === "string" &&
-        field.currentValue.trim().length > 0;
+      ? rawVal.toLowerCase() === topMatch.value.trim().toLowerCase()
+      : true;
   }
 
   function renderScannerFilterChips(): void {
@@ -1371,12 +1375,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         "fs-field-card bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col gap-2";
 
       const cleanName = cleanFieldIdentifier(field.name || "");
+      const cleanId = cleanFieldIdentifier(field.id || "");
       const displayName =
         field.label ||
         field.placeholder ||
         cleanName ||
-        field.name ||
-        field.id ||
+        cleanId ||
         `Input #${field.index + 1}`;
       const topMatch = field.topMatch;
       const initialValue = topMatch ? topMatch.value : field.currentValue || "";

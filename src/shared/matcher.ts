@@ -46,9 +46,10 @@ export function cleanFieldIdentifier(raw: string): string {
   s = s.replace(/[-_]\d+$/g, "");
 
   // 4. Remove system / framework prefixes with optional ID numbers
-  // e.g. systemfield_, customfield_10025_, customfield123_, field_456_, input_, form_
+  // e.g. systemfield_, customfield_10025_, customfield123_
+  s = s.replace(/^(?:systemfield|customfield)[-_]*(?:\d+[-_]*)?/gi, "");
   s = s.replace(
-    /^(?:systemfield|customfield|field|input|form|c|attr)[-_]*(?:\d+[-_]*)?/gi,
+    /^(?:rec[-_]form|rec|crc|crm|zf|field|input|form|attr|c)(?:[-_]+(?:\d+[-_]*)?|\d+[-_]?)/gi,
     "",
   );
 
@@ -73,7 +74,21 @@ export function cleanFieldIdentifier(raw: string): string {
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   });
 
-  return formattedWords.join(" ");
+  const result = formattedWords.join(" ");
+
+  const genericBlacklist = new Set([
+    "rec form",
+    "rec",
+    "form",
+    "input",
+    "field",
+    "customfield",
+    "systemfield",
+    "element",
+  ]);
+  if (genericBlacklist.has(result.toLowerCase())) return "";
+
+  return result;
 }
 
 /**
@@ -241,6 +256,53 @@ export function findOptionLabelForElement(element: HTMLElement | null): string {
 }
 
 
+const FIELD_QA_SELECTOR =
+  "[data-zcqa], [data-field-name], [data-field], [data-automation-id], [data-qa], [data-testid]";
+
+/**
+ * Extract semantic QA identifier from the closest dedicated field component wrapper.
+ * Strictly excludes top-level page, form, modal, or dialog containers to avoid false labels.
+ */
+function getClosestFieldQaValue(element: HTMLElement | null): string {
+  if (!element || !element.closest) return "";
+
+  try {
+    const qaAncestor = element.closest(FIELD_QA_SELECTOR);
+    if (!qaAncestor || qaAncestor === element) return "";
+
+    const tag = (qaAncestor.tagName || "").toUpperCase();
+    if (["FORM", "BODY", "HTML", "MAIN", "SECTION", "DIALOG"].includes(tag)) {
+      return "";
+    }
+
+    const zcqa = qaAncestor.getAttribute("data-zcqa");
+    if (zcqa) return zcqa;
+
+    const fieldName = qaAncestor.getAttribute("data-field-name");
+    if (fieldName) return fieldName;
+
+    const dataField = qaAncestor.getAttribute("data-field");
+    if (dataField) return dataField;
+
+    const autoId = qaAncestor.getAttribute("data-automation-id");
+    if (autoId && !/(?:form|modal|dialog|page|app|screen)/i.test(autoId)) {
+      return autoId;
+    }
+
+    const qaOrTestId =
+      qaAncestor.getAttribute("data-qa") || qaAncestor.getAttribute("data-testid") || "";
+    if (
+      qaOrTestId &&
+      /(?:field|input|question|entry|item)/i.test(qaOrTestId) &&
+      !/(?:form|modal|dialog|page|app|table|grid)/i.test(qaOrTestId)
+    ) {
+      return qaOrTestId;
+    }
+  } catch (e) {}
+
+  return "";
+}
+
 /**
  * Intelligently find visual or explicit label for an element
  */
@@ -258,51 +320,50 @@ export function findLabelForElement(element: HTMLElement | null): string {
 
     // For radio and checkbox inputs in custom toggle containers or fieldsets, prioritize group question title
     if ((isRadio || isCheckbox) && element.closest) {
-
-      const container = element.closest(
-        "fieldset, [data-field-path], ._fieldEntry, [class*='fieldEntry'], ._container_1258i_28, ._yesno, [class*='yesno'], .field, [class*='field-wrapper'], [class*='form-field'], [class*='form-group'], [id*='_container'], [id*='container']",
-      );
-      if (container) {
-        const groupLabel = container.querySelector(
-          "legend, label.ashby-application-form-question-title, [class*='question-title'], [class*='field-title'], .field-label, .form-label, [data-testid*='label'], label[id*='_label'], label[id*='label']",
-        ) as HTMLElement;
-        if (
-          groupLabel &&
-          groupLabel !== element &&
-          !groupLabel.contains(element) &&
-          groupLabel.tagName !== "H1"
-        ) {
-          const text = cleanExtractedLabelText(
-            groupLabel.innerText || groupLabel.textContent || "",
-          );
-          if (text && text.length < 150) return text;
-        }
-
-        // Check if container has data-field-path matching a label[for]
-        const dataPath = container.getAttribute ? container.getAttribute("data-field-path") : null;
-        if (dataPath) {
-          const pathLabel = container.querySelector(`label[for="${dataPath}"]`) as HTMLElement;
-          if (pathLabel && pathLabel !== element) {
-            const text = cleanExtractedLabelText(pathLabel.innerText || pathLabel.textContent || "");
+      try {
+        const container = element.closest(
+          "fieldset, [data-field-path], ._fieldEntry, [class*='fieldEntry'], ._container_1258i_28, ._yesno, [class*='yesno'], .field, [class*='field-wrapper'], [class*='fieldWrapper'], [class*='field-group'], [class*='field-container'], [class*='fieldContainer'], [class*='form-field'], [class*='form-group'], [class*='form-row'], [class*='form-item'], .slds-form-element, [class*='control-group'], .crc-form-row, [class*='crc-form-row'], [id*='_container'], [id*='container']",
+        );
+        if (container) {
+          const groupLabel = container.querySelector(
+            "legend, label.ashby-application-form-question-title, [class*='question-title'], [class*='field-title'], .crm-from-label, .crc-label-text, .field-label, .form-label, [data-testid*='label'], label[id*='_label'], label[id*='label'], [class*='label-text']",
+          ) as HTMLElement;
+          if (
+            groupLabel &&
+            groupLabel !== element &&
+            (!groupLabel.contains || !groupLabel.contains(element)) &&
+            groupLabel.tagName !== "H1"
+          ) {
+            const text = cleanExtractedLabelText(
+              groupLabel.innerText || groupLabel.textContent || "",
+            );
             if (text && text.length < 150) return text;
           }
-        }
 
-        // Check any label in container that is not associated with this individual input item
-        const allLabelsInContainer = container.querySelectorAll("legend, label, dt");
-        for (let i = 0; i < allLabelsInContainer.length; i++) {
-          const lbl = allLabelsInContainer[i] as HTMLElement;
-          if (lbl && lbl.tagName !== "H1" && !lbl.contains(element)) {
-            const forAttr = lbl.getAttribute ? lbl.getAttribute("for") : (lbl as any).htmlFor;
-            if (!forAttr || (forAttr !== element.id && (isRadio || !element.id))) {
-              const text = cleanExtractedLabelText(
-                lbl.innerText || lbl.textContent || "",
-              );
+          const dataPath = container.getAttribute ? container.getAttribute("data-field-path") : null;
+          if (dataPath && container.querySelector) {
+            const pathLabel = container.querySelector(`label[for="${dataPath}"]`) as HTMLElement;
+            if (pathLabel && pathLabel !== element) {
+              const text = cleanExtractedLabelText(pathLabel.innerText || pathLabel.textContent || "");
               if (text && text.length < 150) return text;
             }
           }
+
+          const allLabelsInContainer = container.querySelectorAll("legend, label, dt");
+          for (let i = 0; i < allLabelsInContainer.length; i++) {
+            const lbl = allLabelsInContainer[i] as HTMLElement;
+            if (lbl && lbl.tagName !== "H1" && (!lbl.contains || !lbl.contains(element))) {
+              const forAttr = lbl.getAttribute ? lbl.getAttribute("for") : (lbl as any).htmlFor;
+              if (!forAttr || (forAttr !== element.id && (isRadio || !element.id))) {
+                const text = cleanExtractedLabelText(
+                  lbl.innerText || lbl.textContent || "",
+                );
+                if (text && text.length < 150) return text;
+              }
+            }
+          }
         }
-      }
+      } catch (e) {}
     }
 
     // 1. Native element.labels collection
@@ -337,7 +398,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
               ? CSS.escape(idVal)
               : idVal;
           const label = document.querySelector(
-            `label[for="${escapedId}"]`,
+            `label[for="${escapedId}"], label[id="crc-label-${escapedId}"]`,
           ) as HTMLElement;
           if (label && (label.innerText || label.textContent)) {
             const t = cleanExtractedLabelText(
@@ -355,7 +416,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
               ? CSS.escape(nameVal)
               : nameVal;
           const labelByName = document.querySelector(
-            `label[id="${escapedName}_label"], label[id="${escapedName}-label"], label[for="${escapedName}"]`,
+            `label[for="${escapedName}"], label[id="${escapedName}_label"], label[id="${escapedName}-label"], label[id="crc-label-${escapedName}"]`,
           ) as HTMLElement;
           if (labelByName && (labelByName.innerText || labelByName.textContent)) {
             const t = cleanExtractedLabelText(
@@ -491,7 +552,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
       }
     } catch (e) {}
 
-    // 7. Field container search (max depth 3, scoped strictly to dedicated single-field wrappers)
+    // 7. Field container search (max depth 6, scoped strictly to dedicated single-field wrappers)
     const STOP_CONTAINER_TAGS = [
       "BODY",
       "HTML",
@@ -504,7 +565,7 @@ export function findLabelForElement(element: HTMLElement | null): string {
     let currentParent: HTMLElement | null = element.parentElement;
     let depth = 0;
 
-    while (currentParent && depth < 3) {
+    while (currentParent && depth < 6) {
       try {
         const parentTag = currentParent.tagName.toUpperCase();
         if (STOP_CONTAINER_TAGS.includes(parentTag)) {
@@ -537,13 +598,13 @@ export function findLabelForElement(element: HTMLElement | null): string {
 
         // Search dedicated single-field wrapper
         const containerLabel = currentParent.querySelector(
-          "label, legend, .label, .field-label, .form-label, [class*='label'], [class*='question'], [class*='field-title'], [data-testid*='label'], dt, span.label, th",
+          "label, legend, .crm-from-label, .crc-label-text, .label, .field-label, .form-label, [class*='label'], [class*='question'], [class*='field-title'], [data-testid*='label'], dt, span.label, th",
         ) as HTMLElement;
 
         if (
           containerLabel &&
           containerLabel !== element &&
-          !containerLabel.contains(element) &&
+          (!containerLabel.contains || !containerLabel.contains(element)) &&
           containerLabel.tagName !== "H1"
         ) {
           const text = cleanExtractedLabelText(
@@ -593,6 +654,15 @@ export function findLabelForElement(element: HTMLElement | null): string {
 
       currentParent = currentParent.parentElement;
       depth++;
+    }
+
+    // 8. Semantic data attribute fallback from closest ancestor
+    const qaVal = getClosestFieldQaValue(element);
+    if (qaVal) {
+      const cleanedQa = cleanFieldIdentifier(qaVal);
+      if (cleanedQa && cleanedQa.length >= 2) {
+        return cleanedQa;
+      }
     }
   } catch (err) {}
 
@@ -676,12 +746,16 @@ export function extractFieldMetadata(element: any): FieldMetadata | null {
     : "";
   const label = findLabelForElement(element);
 
-  // Collect data attributes (e.g. data-qa, data-testid, data-field)
+  // Collect data attributes (e.g. data-qa, data-testid, data-field, data-zcqa)
   const dataAttributes: string[] = [];
   if (element.dataset) {
     for (const [_, v] of Object.entries(element.dataset)) {
       if (typeof v === "string") dataAttributes.push(v);
     }
+  }
+  const closestQa = getClosestFieldQaValue(element);
+  if (closestQa && !dataAttributes.includes(closestQa)) {
+    dataAttributes.push(closestQa);
   }
 
   // Collect options for radio group or select

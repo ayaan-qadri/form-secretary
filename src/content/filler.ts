@@ -21,6 +21,54 @@ function isPositiveBooleanValue(val: any): boolean {
   );
 }
 
+function findBestOptionIndex(
+  options: { text: string; value: string }[],
+  targetValue: string,
+): number {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const target = norm(targetValue);
+  if (!target) return -1;
+
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    if (!opt) continue;
+    const optVal = norm(opt.value);
+    const optText = norm(opt.text);
+    if (optVal === target || optText === target) {
+      return i;
+    }
+  }
+
+  for (let i = 0; i < options.length; i++) {
+    const opt = options[i];
+    if (!opt) continue;
+    const optText = norm(opt.text);
+    if (
+      optText.startsWith(target + " ") ||
+      optText.startsWith(target + ",") ||
+      optText.startsWith(target + " (") ||
+      optText.split(/[,(]/)[0]?.trim() === target
+    ) {
+      return i;
+    }
+  }
+
+  if (target.length >= 2) {
+    for (let i = 0; i < options.length; i++) {
+      const opt = options[i];
+      if (!opt) continue;
+      const optText = norm(opt.text);
+      if (optText.length >= 2) {
+        if (optText.includes(target) || target.includes(optText)) {
+          return i;
+        }
+      }
+    }
+  }
+
+  return -1;
+}
+
 export function fillElement(
   element: HTMLElement | null,
   value: any,
@@ -213,31 +261,68 @@ export function fillElement(
     } else if (isSelect) {
       // 4. Select Dropdowns
       const selectEl = element as HTMLSelectElement;
-      const strVal = String(value).toLowerCase().trim();
-      let matchedIndex = -1;
-
+      const opts: { text: string; value: string }[] = [];
       for (let i = 0; i < selectEl.options.length; i++) {
         const opt = selectEl.options[i];
-        if (!opt) continue;
-        const optVal = opt.value.toLowerCase().trim();
-        const optText = opt.text.toLowerCase().trim();
-        if (
-          optVal === strVal ||
-          optText === strVal ||
-          optText.includes(strVal) ||
-          strVal.includes(optText)
-        ) {
-          matchedIndex = i;
-          break;
-        }
+        opts.push({
+          text: opt ? opt.text || "" : "",
+          value: opt ? opt.value || "" : "",
+        });
       }
 
+      const matchedIndex = findBestOptionIndex(opts, String(value));
       if (matchedIndex >= 0) {
         selectEl.selectedIndex = matchedIndex;
+      } else {
+        return false;
       }
     } else if (isContentEditable) {
       // 5. ContentEditable Elements
       element.innerText = value;
+    } else if (rawType === "combobox" || tag === "lyte-drop-button") {
+      // 6. Custom Combobox & Dropdowns
+      const container =
+        (element.parentElement?.closest
+          ? element.parentElement.closest(
+              "lyte-dropdown, crux-picklist-component, [class*='dropdown'], .crc-form-row, [class*='combobox']",
+            )
+          : null) ||
+        (element.closest
+          ? element.closest(
+              "lyte-dropdown, crux-picklist-component, [class*='dropdown'], .crc-form-row",
+            )
+          : null);
+      if (container) {
+        let items = container.querySelectorAll(
+          "lyte-drop-item, [role='option'], .option, [class*='drop-item']",
+        );
+        if (items.length === 0 && typeof (element as any).click === "function") {
+          try {
+            (element as any).click();
+            items = container.querySelectorAll(
+              "lyte-drop-item, [role='option'], .option, [class*='drop-item']",
+            );
+          } catch (e) {}
+        }
+
+        const optionList: { text: string; value: string; element: HTMLElement }[] = [];
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i] as HTMLElement;
+          optionList.push({
+            text: item.innerText || item.textContent || "",
+            value: item.getAttribute("data-value") || "",
+            element: item,
+          });
+        }
+
+        const bestIdx = findBestOptionIndex(optionList, String(value));
+        const matched = bestIdx >= 0 ? optionList[bestIdx] : null;
+        if (matched) {
+          matched.element.click();
+        } else {
+          return false;
+        }
+      }
     }
 
     // Comprehensive event sequence for maximum framework reactivity

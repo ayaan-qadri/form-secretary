@@ -82,6 +82,92 @@ describe("FormSecretaryFiller", () => {
       assert.strictEqual(success, true);
       assert.strictEqual(select.selectedIndex, 1);
     });
+
+    it("prioritizes exact match over prefix or substring (India over Indianapolis)", () => {
+      const select = new MockElement("select");
+      const opt1 = new MockElement("option");
+      opt1.value = "IN_POLIS";
+      opt1.text = "Indianapolis";
+      const opt2 = new MockElement("option");
+      opt2.value = "IN";
+      opt2.text = "India";
+      const opt3 = new MockElement("option");
+      opt3.value = "ID";
+      opt3.text = "Indonesia";
+
+      select.appendChild(opt1);
+      select.appendChild(opt2);
+      select.appendChild(opt3);
+
+      const success = filler.fillElement(select, "India");
+      assert.strictEqual(success, true);
+      assert.strictEqual(select.selectedIndex, 1);
+    });
+
+    it("returns false when select option cannot be matched", () => {
+      const select = new MockElement("select");
+      const opt1 = new MockElement("option");
+      opt1.value = "US";
+      opt1.text = "United States";
+      select.appendChild(opt1);
+
+      const success = filler.fillElement(select, "Nonexistent Country");
+      assert.strictEqual(success, false);
+    });
+  });
+
+  describe("fillElement on Combobox & Custom Dropdowns", () => {
+    it("prioritizes exact option over substring (India over Indianapolis) in custom combobox", () => {
+      const dropdown = new MockElement("lyte-dropdown");
+      const btn = new MockElement("lyte-drop-button");
+      btn.setAttribute("role", "combobox");
+      btn.innerText = "-None-";
+
+      let clickedItem = null;
+      const item1 = new MockElement("lyte-drop-item");
+      item1.innerText = "Indianapolis";
+      item1.setAttribute("data-value", "Indianapolis");
+      item1.addEventListener("click", () => {
+        clickedItem = "Indianapolis";
+      });
+
+      const item2 = new MockElement("lyte-drop-item");
+      item2.innerText = "India";
+      item2.setAttribute("data-value", "India");
+      item2.addEventListener("click", () => {
+        clickedItem = "India";
+      });
+
+      const item3 = new MockElement("lyte-drop-item");
+      item3.innerText = "Indonesia";
+      item3.setAttribute("data-value", "Indonesia");
+      item3.addEventListener("click", () => {
+        clickedItem = "Indonesia";
+      });
+
+      dropdown.appendChild(btn);
+      dropdown.appendChild(item1);
+      dropdown.appendChild(item2);
+      dropdown.appendChild(item3);
+
+      const success = filler.fillElement(btn, "India");
+      assert.strictEqual(success, true);
+      assert.strictEqual(clickedItem, "India");
+    });
+
+    it("returns false when custom combobox option cannot be matched", () => {
+      const dropdown = new MockElement("lyte-dropdown");
+      const btn = new MockElement("lyte-drop-button");
+      btn.setAttribute("role", "combobox");
+      dropdown.appendChild(btn);
+
+      const item = new MockElement("lyte-drop-item");
+      item.innerText = "Option A";
+      dropdown.appendChild(item);
+
+      const success = filler.fillElement(btn, "Option Z");
+      assert.strictEqual(success, false);
+    });
   });
 
   describe("fillElement on Radio Button Groups", () => {

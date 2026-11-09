@@ -932,6 +932,137 @@ describe("FormSecretaryMatcher", () => {
         "Voluntary Self-Identification of Disability",
       );
     });
+
+    it("extracts field labels from Zoho Recruit nested form rows", () => {
+      const row1 = new MockElement("div");
+      row1.className = "crc-form-row crc-rec-form_141457000000036003";
+
+      const label1 = new MockElement("label");
+      label1.className = "crm-from-label";
+      label1.id = "crc-label-rec-form_141457000000036003";
+      label1.innerText = "First Name *";
+
+      const wrap1 = new MockElement("div");
+      wrap1.className = "crc-field-component-wrap";
+
+      const recComp1 = new MockElement("rec-text-component");
+      recComp1.setAttribute("data-zcqa", "rec_First_Name");
+
+      const lyteInput1 = new MockElement("lyte-input");
+      lyteInput1.className = "cxBoxInput";
+
+      const lyteField1 = new MockElement("div");
+      lyteField1.className = "lyteField";
+
+      const input1 = new MockElement("input");
+      input1.type = "text";
+      input1.name = "rec-form_141457000000036003";
+      input1.id = "rec_fld_141457000000036003";
+      input1.value = "Ayaan";
+
+      lyteField1.appendChild(input1);
+      lyteInput1.appendChild(lyteField1);
+      recComp1.appendChild(lyteInput1);
+      wrap1.appendChild(recComp1);
+      row1.appendChild(label1);
+      row1.appendChild(wrap1);
+      globalThis.document.documentElement.appendChild(row1);
+
+      assert.strictEqual(matcher.findLabelForElement(input1), "First Name");
+
+      const row2 = new MockElement("div");
+      row2.className = "crc-form-row crc-rec-form_141457000000036010";
+
+      const label2 = new MockElement("label");
+      label2.className = "crm-from-label";
+      label2.id = "crc-label-rec-form_141457000000036010";
+      label2.innerText = "Notice Period ( If you have 45 days of notice period, please mention '45') *";
+
+      const wrap2 = new MockElement("div");
+      wrap2.className = "crc-field-component-wrap";
+
+      const recComp2 = new MockElement("rec-text-component");
+      recComp2.setAttribute("data-zcqa", "rec_Notice_Period");
+
+      const lyteInput2 = new MockElement("lyte-input");
+      const lyteField2 = new MockElement("div");
+      const input2 = new MockElement("input");
+      input2.type = "text";
+      input2.name = "rec-form_141457000000036010";
+      input2.id = "rec_fld_141457000000036010";
+      input2.value = "30 days";
+
+      lyteField2.appendChild(input2);
+      lyteInput2.appendChild(lyteField2);
+      recComp2.appendChild(lyteInput2);
+      wrap2.appendChild(recComp2);
+      row2.appendChild(label2);
+      row2.appendChild(wrap2);
+      globalThis.document.documentElement.appendChild(row2);
+
+      assert.strictEqual(
+        matcher.findLabelForElement(input2),
+        "Notice Period ( If you have 45 days of notice period, please mention '45')",
+      );
+
+      const row3 = new MockElement("div");
+      row3.className = "crc-form-row crc-rec-form_141457000000036015";
+
+      const label3 = new MockElement("label");
+      label3.className = "crm-from-label";
+      label3.id = "crc-label-rec-form_141457000000036015";
+      label3.innerText = "Country *";
+
+      const wrap3 = new MockElement("div");
+      wrap3.className = "crc-field-component-wrap";
+
+      const picklistComp = new MockElement("crux-picklist-component");
+      const lyteDropdown = new MockElement("lyte-dropdown");
+      const dropBtn = new MockElement("lyte-drop-button");
+      dropBtn.setAttribute("role", "combobox");
+      dropBtn.innerText = "-None-";
+
+      lyteDropdown.appendChild(dropBtn);
+      picklistComp.appendChild(lyteDropdown);
+      wrap3.appendChild(picklistComp);
+      row3.appendChild(label3);
+      row3.appendChild(wrap3);
+      globalThis.document.documentElement.appendChild(row3);
+
+      assert.strictEqual(matcher.findLabelForElement(dropBtn), "Country");
+    });
+
+    it("does not cross-contaminate labels in multi-field containers (phone_country vs phone)", () => {
+      const container = new MockElement("div");
+      container.className = "form-group";
+
+      const labelCountry = new MockElement("label");
+      labelCountry.setAttribute("for", "phone_country");
+      labelCountry.id = "phone_country_label";
+      labelCountry.innerText = "Country Code";
+
+      const inputCountry = new MockElement("input");
+      inputCountry.id = "phone_country";
+      inputCountry.name = "phone_country";
+
+      const labelPhone = new MockElement("label");
+      labelPhone.setAttribute("for", "phone");
+      labelPhone.id = "phone_label";
+      labelPhone.innerText = "Phone Number";
+
+      const inputPhone = new MockElement("input");
+      inputPhone.id = "phone";
+      inputPhone.name = "phone";
+
+      container.appendChild(labelCountry);
+      container.appendChild(inputCountry);
+      container.appendChild(labelPhone);
+      container.appendChild(inputPhone);
+      globalThis.document.documentElement.appendChild(container);
+
+      assert.strictEqual(matcher.findLabelForElement(inputCountry), "Country Code");
+      assert.strictEqual(matcher.findLabelForElement(inputPhone), "Phone Number");
+    });
   });
 
   describe("cleanFieldIdentifier", () => {
@@ -965,6 +1096,37 @@ describe("FormSecretaryMatcher", () => {
       assert.strictEqual(
         matcher.cleanFieldIdentifier("user[profile_attributes][ssn]"),
         "User Profile Attributes SSN",
+      );
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("rec-form_141457000000036003"),
+        "",
+      );
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("rec-form_First_Name"),
+        "First Name",
+      );
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("rec_Notice_Period"),
+        "Notice Period",
+      );
+    });
+
+    it("preserves real words that begin with framework prefixes", () => {
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("recommendation"),
+        "Recommendation",
+      );
+      assert.strictEqual(matcher.cleanFieldIdentifier("record"), "Record");
+      assert.strictEqual(matcher.cleanFieldIdentifier("receive"), "Receive");
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("recruiter"),
+        "Recruiter",
+      );
+      assert.strictEqual(matcher.cleanFieldIdentifier("country"), "Country");
+      assert.strictEqual(matcher.cleanFieldIdentifier("format"), "Format");
+      assert.strictEqual(
+        matcher.cleanFieldIdentifier("attribute"),
+        "Attribute",
       );
     });
 

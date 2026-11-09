@@ -1010,6 +1010,48 @@ describe("Popup Controller", () => {
       assert.ok(badge.textContent.includes("Filled"));
     });
 
+    it("does not show Filled badge when currentValue is a placeholder such as -None- or Please select", async () => {
+      chrome.tabs.sendMessage = (tabId, msg, cb) => {
+        if (msg.action === "GET_PAGE_FIELDS" && cb) {
+          cb({
+            fields: [
+              {
+                index: 0,
+                name: "country",
+                label: "Country",
+                currentValue: "-None-",
+                matchesCount: 1,
+                topMatch: {
+                  fieldId: "field_country",
+                  label: "Country",
+                  value: "India",
+                  score: 100,
+                },
+              },
+              {
+                index: 1,
+                name: "state",
+                label: "State",
+                currentValue: "Please select...",
+                matchesCount: 0,
+                topMatch: null,
+              },
+            ],
+          });
+        }
+      };
+
+      const scannerTabBtn = document.querySelector(
+        '.fs-tab-btn[data-tab="page-scanner"]',
+      );
+      scannerTabBtn.click();
+      document.getElementById("btn-refresh-scanner")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const badges = document.querySelectorAll(".fs-field-filled-badge");
+      assert.strictEqual(badges.length, 0);
+    });
+
     it("filters scanner fields by Saved, Filled, and Empty chips with correct counts", async () => {
       chrome.tabs.sendMessage = (tabId, msg, cb) => {
         if (msg.action === "GET_PAGE_FIELDS" && cb) {
