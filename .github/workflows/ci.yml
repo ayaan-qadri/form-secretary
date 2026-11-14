@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare WXT Types
+        run: pnpm wxt prepare
+
+      - name: Typecheck
+        run: pnpm compile
+
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Build & Package Chrome Extension (MV3)
+        run: pnpm zip
+
+      - name: Build & Package Firefox Extension (MV2 + Sources)
+        run: pnpm zip:firefox
+
+      - name: Archive Extension Packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: form-secretary-packages
+          path: .output/*.zip
+          include-hidden-files: true
+          retention-days: 14
